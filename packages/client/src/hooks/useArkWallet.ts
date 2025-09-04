@@ -10,10 +10,19 @@ interface WalletData {
   walletInstance?: any; // Store the actual wallet instance
 }
 
+interface BalanceData {
+  available: number;
+  pending: number;
+  total: number;
+  currency: string;
+}
+
 interface ArkWalletState {
   wallet: WalletData | null;
+  balance: BalanceData | null;
   isLoaded: boolean;
   isCreating: boolean;
+  isCheckingBalance: boolean;
   error: string | null;
 }
 
@@ -32,8 +41,10 @@ const generateRandomPrivateKey = (): string => {
 export const useArkWallet = () => {
   const [state, setState] = useState<ArkWalletState>({
     wallet: null,
+    balance: null,
     isLoaded: false,
     isCreating: false,
+    isCheckingBalance: false,
     error: null
   });
 
@@ -153,12 +164,56 @@ export const useArkWallet = () => {
     return null;
   }, []);
 
+  // Check wallet balance
+  const checkBalance = useCallback(async () => {
+    if (!state.wallet?.walletInstance) {
+      console.log('⚠️ No wallet instance available for balance check');
+      return null;
+    }
+
+    setState(prev => ({ ...prev, isCheckingBalance: true }));
+
+    try {
+      // Get balance from the wallet instance
+      const balanceResponse = await state.wallet.walletInstance.getBalance();
+      
+      // Log the entire balance response
+      console.log('💰 Balance Response:', balanceResponse);
+      
+      // Parse the balance data (adjust based on actual SDK response structure)
+      const balanceData: BalanceData = {
+        available: balanceResponse.available || balanceResponse.balance || 0,
+        pending: balanceResponse.pending || 0,
+        total: balanceResponse.total || balanceResponse.balance || 0,
+        currency: balanceResponse.currency || 'sats'
+      };
+
+      setState(prev => ({
+        ...prev,
+        balance: balanceData,
+        isCheckingBalance: false
+      }));
+
+      console.log('✅ Balance updated:', balanceData);
+      return balanceData;
+    } catch (error) {
+      console.error('❌ Balance check failed:', error);
+      setState(prev => ({
+        ...prev,
+        isCheckingBalance: false,
+        error: 'Failed to check balance'
+      }));
+      return null;
+    }
+  }, [state.wallet]);
+
   // Clear wallet from localStorage
   const clearWallet = useCallback(() => {
     localStorage.removeItem(WALLET_STORAGE_KEY);
     setState(prev => ({
       ...prev,
       wallet: null,
+      balance: null,
       isLoaded: true
     }));
     console.log('🗑️ Wallet cleared');
@@ -177,10 +232,28 @@ export const useArkWallet = () => {
     initializeWallet();
   }, [loadWallet, generateWallet]);
 
+  // Set up automatic balance checking when wallet is available
+  useEffect(() => {
+    if (!state.wallet?.walletInstance) return;
+
+    // Check balance immediately
+    checkBalance();
+
+    // Set up polling for balance updates every 10 seconds
+    const balanceInterval = setInterval(() => {
+      checkBalance();
+    }, 10000);
+
+    return () => {
+      clearInterval(balanceInterval);
+    };
+  }, [state.wallet, checkBalance]);
+
   return {
     ...state,
     generateWallet,
     loadWallet,
-    clearWallet
+    clearWallet,
+    checkBalance
   };
 };

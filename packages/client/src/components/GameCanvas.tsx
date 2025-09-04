@@ -1,11 +1,14 @@
 import React, { useRef, useCallback } from 'react';
 import { useSocket } from '../hooks/useSocket';
+import { useArkWallet } from '../hooks/useArkWallet';
 import Blob from './Blob';
 import WalletInfo from './WalletInfo';
+import { BalanceDisplay } from './BalanceDisplay';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const { gameState, connected, moveTo } = useSocket();
+  const { balance, isCheckingBalance } = useArkWallet();
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
@@ -108,17 +111,20 @@ const GameCanvas: React.FC = () => {
         Players: {gameState.players.length}
       </div>
 
+      {/* Balance Display */}
+      <BalanceDisplay balance={balance} isCheckingBalance={isCheckingBalance} />
+
       {/* Instructions */}
       <div style={{
         position: 'absolute',
-        bottom: '20px',
+        bottom: '120px',
         left: '50%',
         transform: 'translateX(-50%)',
-        padding: '15px 25px',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: '10px 20px',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         color: 'white',
-        borderRadius: '25px',
-        fontSize: '16px',
+        borderRadius: '20px',
+        fontSize: '14px',
         fontWeight: 'bold',
         zIndex: 100,
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
