@@ -24,6 +24,10 @@ const GameCanvas: React.FC = () => {
   // Flag to prevent canvas movement when blob is clicked
   const [isBlobClick, setIsBlobClick] = useState(false);
 
+  // Background music
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
   // Register Ark address when wallet is available
   useEffect(() => {
     if (wallet?.address && connected) {
@@ -37,6 +41,50 @@ const GameCanvas: React.FC = () => {
       reportBalance(balance.available);
     }
   }, [balance?.available, connected, reportBalance]);
+
+  // Initialize and play background music
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/artmak-song.mp3');
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3; // Set volume to 30% so it's not too loud
+      
+      // Play music when user first interacts with the page
+      const playMusic = async () => {
+        try {
+          await audioRef.current?.play();
+          setIsMusicPlaying(true);
+        } catch (error) {
+          // Music will play when user interacts with the page
+        }
+      };
+
+      // Try to play immediately
+      playMusic();
+
+      // Also try to play on first user interaction
+      const handleFirstInteraction = () => {
+        playMusic();
+        document.removeEventListener('click', handleFirstInteraction);
+        document.removeEventListener('keydown', handleFirstInteraction);
+        document.removeEventListener('touchstart', handleFirstInteraction);
+      };
+
+      document.addEventListener('click', handleFirstInteraction);
+      document.addEventListener('keydown', handleFirstInteraction);
+      document.addEventListener('touchstart', handleFirstInteraction);
+
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        document.removeEventListener('click', handleFirstInteraction);
+        document.removeEventListener('keydown', handleFirstInteraction);
+        document.removeEventListener('touchstart', handleFirstInteraction);
+      };
+    }
+  }, []);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     // If this was a blob click, ignore canvas movement
@@ -127,6 +175,18 @@ const GameCanvas: React.FC = () => {
       message: ''
     });
   }, []);
+
+  const toggleMusic = useCallback(() => {
+    if (audioRef.current) {
+      if (isMusicPlaying) {
+        audioRef.current.pause();
+        setIsMusicPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsMusicPlaying(true);
+      }
+    }
+  }, [isMusicPlaying]);
 
   return (
     <div
@@ -221,6 +281,31 @@ const GameCanvas: React.FC = () => {
           onBlobClick={handleBlobClick}
         />
       ))}
+
+      {/* Music control button */}
+      <button
+        onClick={toggleMusic}
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          border: 'none',
+          borderRadius: '50%',
+          width: '50px',
+          height: '50px',
+          color: 'white',
+          fontSize: '20px',
+          cursor: 'pointer',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        title={isMusicPlaying ? 'Mute music' : 'Play music'}
+      >
+        {isMusicPlaying ? '🔊' : '🔇'}
+      </button>
 
       {/* Toast Notification */}
       <Toast
