@@ -21,6 +21,9 @@ const GameCanvas: React.FC = () => {
     message: ''
   });
 
+  // Flag to prevent canvas movement when blob is clicked
+  const [isBlobClick, setIsBlobClick] = useState(false);
+
   // Register Ark address when wallet is available
   useEffect(() => {
     if (wallet?.address && connected) {
@@ -29,14 +32,27 @@ const GameCanvas: React.FC = () => {
   }, [wallet?.address, connected, registerArkAddress]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current || !connected) return;
+    console.log('🖱️ Canvas click handler called, isBlobClick:', isBlobClick);
+    
+    // If this was a blob click, ignore canvas movement
+    if (isBlobClick) {
+      console.log('🛑 Ignoring canvas click - blob was clicked');
+      setIsBlobClick(false); // Reset flag
+      return;
+    }
+    
+    if (!canvasRef.current || !connected) {
+      console.log('❌ Canvas click ignored - no ref or not connected');
+      return;
+    }
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
+    console.log('🚀 Moving to:', x, y);
     moveTo(x, y);
-  }, [connected, moveTo]);
+  }, [connected, moveTo, isBlobClick]);
 
   // Fallback for when touch events don't work properly (like in browser emulation)
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
@@ -74,6 +90,9 @@ const GameCanvas: React.FC = () => {
 
   const handleBlobClick = useCallback(async (player: Player) => {
     console.log('🎯 Blob clicked:', player);
+    
+    // Set flag to prevent canvas movement
+    setIsBlobClick(true);
     
     if (!player.arkAddress) {
       console.log('❌ Target player has no Ark address');

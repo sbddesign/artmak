@@ -69,8 +69,25 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
   }, [currentX, currentY]);
 
   const handleBlobClick = (event: React.MouseEvent) => {
+    console.log('🎯 Blob click handler called for player:', player.id);
     event.stopPropagation(); // Prevent canvas click
+    event.preventDefault(); // Prevent default behavior
+    console.log('🛑 Event propagation stopped');
     if (onBlobClick && !isCurrentPlayer) {
+      console.log('💰 Calling onBlobClick for payment');
+      onBlobClick(player);
+    } else {
+      console.log('❌ Not calling onBlobClick - isCurrentPlayer:', isCurrentPlayer, 'onBlobClick exists:', !!onBlobClick);
+    }
+  };
+
+  const handleBlobTouch = (event: React.TouchEvent) => {
+    console.log('📱 Blob touch handler called for player:', player.id);
+    event.stopPropagation(); // Prevent canvas touch
+    event.preventDefault(); // Prevent default behavior
+    console.log('🛑 Touch event propagation stopped');
+    if (onBlobClick && !isCurrentPlayer) {
+      console.log('💰 Calling onBlobClick for payment (touch)');
       onBlobClick(player);
     }
   };
@@ -79,7 +96,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
     <div
       ref={blobRef}
       className={`blob ${isCurrentPlayer ? 'current-player' : ''}`}
-      onClick={handleBlobClick}
+      onMouseDown={handleBlobClick}
+      onTouchStart={handleBlobTouch}
       style={{
         position: 'absolute',
         width: '60px',
