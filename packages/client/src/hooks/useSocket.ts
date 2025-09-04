@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { GameState, Player, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from '../types/game';
+import { GameState, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from '../types/game';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
 
@@ -20,7 +20,7 @@ export const useSocket = () => {
     newSocket.on('connect', () => {
       console.log('Connected to server');
       setConnected(true);
-      currentPlayerIdRef.current = newSocket.id;
+      currentPlayerIdRef.current = newSocket.id || null;
     });
 
     newSocket.on('disconnect', () => {
@@ -29,10 +29,10 @@ export const useSocket = () => {
     });
 
     newSocket.on('gameState', (state: GameState) => {
-      setGameState(prev => ({
+      setGameState({
         ...state,
         currentPlayer: state.players.find(p => p.id === currentPlayerIdRef.current) || null
-      }));
+      });
     });
 
     newSocket.on('playerJoined', (event: PlayerJoinEvent) => {
