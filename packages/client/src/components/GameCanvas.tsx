@@ -34,23 +34,18 @@ const GameCanvas: React.FC = () => {
   // Report balance changes to server
   useEffect(() => {
     if (balance?.available !== undefined && connected) {
-      console.log('📊 Reporting balance to server:', balance.available);
       reportBalance(balance.available);
     }
   }, [balance?.available, connected, reportBalance]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    console.log('🖱️ Canvas click handler called, isBlobClick:', isBlobClick);
-    
     // If this was a blob click, ignore canvas movement
     if (isBlobClick) {
-      console.log('🛑 Ignoring canvas click - blob was clicked');
       setIsBlobClick(false); // Reset flag
       return;
     }
     
     if (!canvasRef.current || !connected) {
-      console.log('❌ Canvas click ignored - no ref or not connected');
       return;
     }
 
@@ -58,7 +53,6 @@ const GameCanvas: React.FC = () => {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    console.log('🚀 Moving to:', x, y);
     moveTo(x, y);
   }, [connected, moveTo, isBlobClick]);
 
@@ -97,27 +91,20 @@ const GameCanvas: React.FC = () => {
   }, [connected, moveTo]);
 
   const handleBlobClick = useCallback(async (player: Player) => {
-    console.log('🎯 Blob clicked:', player);
-    
     // Set flag to prevent canvas movement
     setIsBlobClick(true);
     
     if (!player.arkAddress) {
-      console.log('❌ Target player has no Ark address');
       return;
     }
 
     try {
-      console.log('🚀 Sending one-click payment to:', player.arkAddress);
-      
       // Send 1000 sats payment
-      const paymentResult = await sendPayment(
+      await sendPayment(
         player.arkAddress,
         1000,
         'One-click payment from Artmak game'
       );
-
-      console.log('✅ Payment successful:', paymentResult);
       
       // Show success toast
       setToast({
@@ -129,7 +116,7 @@ const GameCanvas: React.FC = () => {
       sendPaymentRequest(player.id, 1000, 'One-click payment');
 
     } catch (error) {
-      console.error('❌ Payment failed:', error);
+      console.error('Payment failed:', error);
       // Could show error toast here if desired
     }
   }, [sendPayment, sendPaymentRequest]);

@@ -42,8 +42,6 @@ app.get('/health', (req, res) => {
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`Player connected: ${socket.id}`);
-  
   // Add player to game
   const player = gameManager.addPlayer(socket.id);
   
@@ -56,7 +54,6 @@ io.on('connection', (socket) => {
   
   // Handle player movement
   socket.on('move', (moveEvent: MoveEvent) => {
-    console.log(`Player ${socket.id} moving to (${moveEvent.x}, ${moveEvent.y})`);
     gameManager.movePlayer(socket.id, moveEvent);
     
     // Notify all players about the movement
@@ -75,7 +72,6 @@ io.on('connection', (socket) => {
 
   // Handle Ark address registration
   socket.on('registerArkAddress', (arkAddress: string) => {
-    console.log(`Player ${socket.id} registered Ark address: ${arkAddress}`);
     gameManager.updatePlayerArkAddress(socket.id, arkAddress);
     
     // Notify all players about the Ark address update
@@ -89,7 +85,6 @@ io.on('connection', (socket) => {
 
   // Handle balance updates
   socket.on('balanceUpdate', (balanceUpdate: BalanceUpdateEvent) => {
-    console.log(`Player ${balanceUpdate.playerId} balance updated: ${balanceUpdate.availableBalance} sats`);
     gameManager.updatePlayerBalance(balanceUpdate.playerId, balanceUpdate.availableBalance);
     
     // Notify all players about the balance update
@@ -98,7 +93,6 @@ io.on('connection', (socket) => {
 
   // Handle payment requests
   socket.on('paymentRequest', async (paymentRequest: PaymentRequestEvent) => {
-    console.log(`Payment request from ${paymentRequest.fromPlayerId} to ${paymentRequest.toPlayerId} for ${paymentRequest.amount} sats`);
     
     try {
       // Get the target player's Ark address
@@ -148,7 +142,6 @@ io.on('connection', (socket) => {
   
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log(`Player disconnected: ${socket.id}`);
     gameManager.removePlayer(socket.id);
     
     // Notify other players about the player leaving

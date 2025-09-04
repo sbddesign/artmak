@@ -18,15 +18,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
     const baseSize = 60; // Default size in pixels
     const balance = player.availableBalance || 0;
     const sizeMultiplier = 1 + (balance / 1000) * 0.005; // 0.5% increase per 1000 sats
-    const calculatedSize = Math.max(baseSize, baseSize * sizeMultiplier);
-    
-    // Log sizing calculation for debugging
-    if (balance > 0) {
-      console.log(`🎯 Player ${player.id}: ${balance} sats → ${calculatedSize.toFixed(1)}px (${((sizeMultiplier - 1) * 100).toFixed(1)}% increase)`);
-    }
-    
-    return calculatedSize;
-  }, [player.availableBalance, player.id]);
+    return Math.max(baseSize, baseSize * sizeMultiplier);
+  }, [player.availableBalance]);
 
   const blobSize = calculateSize();
 
@@ -86,25 +79,17 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
   }, [currentX, currentY]);
 
   const handleBlobClick = (event: React.MouseEvent) => {
-    console.log('🎯 Blob click handler called for player:', player.id);
     event.stopPropagation(); // Prevent canvas click
     event.preventDefault(); // Prevent default behavior
-    console.log('🛑 Event propagation stopped');
     if (onBlobClick && !isCurrentPlayer) {
-      console.log('💰 Calling onBlobClick for payment');
       onBlobClick(player);
-    } else {
-      console.log('❌ Not calling onBlobClick - isCurrentPlayer:', isCurrentPlayer, 'onBlobClick exists:', !!onBlobClick);
     }
   };
 
   const handleBlobTouch = (event: React.TouchEvent) => {
-    console.log('📱 Blob touch handler called for player:', player.id);
     event.stopPropagation(); // Prevent canvas touch
     event.preventDefault(); // Prevent default behavior
-    console.log('🛑 Touch event propagation stopped');
     if (onBlobClick && !isCurrentPlayer) {
-      console.log('💰 Calling onBlobClick for payment (touch)');
       onBlobClick(player);
     }
   };

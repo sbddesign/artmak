@@ -18,13 +18,11 @@ export const useSocket = () => {
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to server');
       setConnected(true);
       currentPlayerIdRef.current = newSocket.id || null;
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
       setConnected(false);
     });
 
@@ -79,13 +77,11 @@ export const useSocket = () => {
       }));
     });
 
-    newSocket.on('paymentRequest', (paymentRequest: PaymentRequestEvent & { targetArkAddress?: string }) => {
-      console.log('💰 Payment request received:', paymentRequest);
+    newSocket.on('paymentRequest', (_paymentRequest: PaymentRequestEvent & { targetArkAddress?: string }) => {
       // This will be handled by the payment component
     });
 
-    newSocket.on('paymentResponse', (response: PaymentResponseEvent) => {
-      console.log('💰 Payment response:', response);
+    newSocket.on('paymentResponse', (_response: PaymentResponseEvent) => {
       // This will be handled by the payment component
     });
 
