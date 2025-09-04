@@ -54,21 +54,21 @@ pnpm dev
 ```
 
 This will start:
-- Client on http://localhost:3000
-- Server on http://localhost:3001
+- Client on http://localhost:3000 (or next available port)
+- Server on http://localhost:3002
 
 ### Environment Variables
 
 #### Client (packages/client)
 Create a `.env` file:
 ```env
-VITE_SERVER_URL=http://localhost:3001
+VITE_SERVER_URL=http://localhost:3002
 ```
 
 #### Server (packages/server)
 Create a `.env` file:
 ```env
-PORT=3001
+PORT=3002
 CLIENT_URL=http://localhost:3000
 ```
 
@@ -101,7 +101,7 @@ CLIENT_URL=http://localhost:3000
 docker-compose up -d
 ```
 
-The server will be available on port 3001.
+The server will be available on port 3002.
 
 ## Development Commands
 

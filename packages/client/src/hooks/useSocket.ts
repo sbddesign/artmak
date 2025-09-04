@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, Player, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from '../types/game';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
 
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -64,6 +64,16 @@ export const useSocket = () => {
     if (socket && connected) {
       const moveEvent: MoveEvent = { x, y };
       socket.emit('move', moveEvent);
+      
+      // Update local state immediately for current player
+      setGameState(prev => ({
+        ...prev,
+        players: prev.players.map(p => 
+          p.id === prev.currentPlayer?.id 
+            ? { ...p, targetX: x, targetY: y, isMoving: true }
+            : p
+        )
+      }));
     }
   };
 

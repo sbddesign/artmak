@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Player } from '../types/game';
 
 interface BlobProps {
@@ -8,13 +8,64 @@ interface BlobProps {
 
 const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false }) => {
   const blobRef = useRef<HTMLDivElement>(null);
+  const [currentX, setCurrentX] = useState(player.x);
+  const [currentY, setCurrentY] = useState(player.y);
+  const animationRef = useRef<number>();
+
+  useEffect(() => {
+    // Initialize position when player first appears
+    if (blobRef.current && !animationRef.current) {
+      setCurrentX(player.x);
+      setCurrentY(player.y);
+    }
+  }, [player.id]);
+
+  useEffect(() => {
+    // Animate to target position
+    const animateToTarget = () => {
+      const dx = player.targetX - currentX;
+      const dy = player.targetY - currentY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 1) {
+        // Close enough to target
+        setCurrentX(player.targetX);
+        setCurrentY(player.targetY);
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = undefined;
+        }
+        return;
+      }
+
+      // Move towards target (smooth movement speed)
+      const speed = 2; // pixels per frame
+      const moveX = (dx / distance) * speed;
+      const moveY = (dy / distance) * speed;
+
+      setCurrentX(prev => prev + moveX);
+      setCurrentY(prev => prev + moveY);
+
+      animationRef.current = requestAnimationFrame(animateToTarget);
+    };
+
+    if (player.isMoving) {
+      animationRef.current = requestAnimationFrame(animateToTarget);
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY]);
 
   useEffect(() => {
     if (blobRef.current) {
-      blobRef.current.style.left = `${player.x}px`;
-      blobRef.current.style.top = `${player.y}px`;
+      blobRef.current.style.left = `${currentX}px`;
+      blobRef.current.style.top = `${currentY}px`;
     }
-  }, [player.x, player.y]);
+  }, [currentX, currentY]);
 
   return (
     <div
@@ -28,7 +79,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false }) => {
         backgroundColor: player.color,
         border: isCurrentPlayer ? '3px solid #fff' : '2px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-        transition: 'all 0.3s ease-out',
+        transition: 'none',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',

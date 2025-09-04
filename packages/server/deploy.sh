@@ -41,5 +41,5 @@ docker-compose logs -f
 EOF
 
 echo "✅ Deployment complete!"
-echo "🌐 Server should be running at: http://$SERVER_HOST:3001"
-echo "🔍 Check health: http://$SERVER_HOST:3001/health"
+echo "🌐 Server should be running at: http://$SERVER_HOST:3002"
+echo "🔍 Check health: http://$SERVER_HOST:3002/health"
