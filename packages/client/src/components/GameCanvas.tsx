@@ -16,12 +16,37 @@ const GameCanvas: React.FC = () => {
     moveTo(x, y);
   }, [connected, moveTo]);
 
+  // Fallback for when touch events don't work properly (like in browser emulation)
+  const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!canvasRef.current || !connected) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    moveTo(x, y);
+  }, [connected, moveTo]);
+
   const handleCanvasTouch = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
 
     event.preventDefault();
     const rect = canvasRef.current.getBoundingClientRect();
+    
+    // Check if touches exist and has at least one touch
+    if (!event.touches || event.touches.length === 0) {
+      console.warn('No touch data available');
+      return;
+    }
+    
     const touch = event.touches[0];
+    
+    // Additional safety check for touch properties
+    if (typeof touch.clientX === 'undefined' || typeof touch.clientY === 'undefined') {
+      console.warn('Touch coordinates not available');
+      return;
+    }
+    
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
 
@@ -32,6 +57,8 @@ const GameCanvas: React.FC = () => {
     <div
       ref={canvasRef}
       onClick={handleCanvasClick}
+      onMouseDown={handleCanvasMouseDown}
+      onTouchStart={handleCanvasTouch}
       onTouchEnd={handleCanvasTouch}
       style={{
         position: 'relative',
