@@ -9,8 +9,14 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:3000",
+      "https://artmak.atlbitlab.com",
+      "http://localhost:3000",
+      "http://localhost:3001"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -18,7 +24,15 @@ const PORT = process.env.PORT || 3002;
 const gameManager = new GameManager();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.CLIENT_URL || "http://localhost:3000",
+    "https://artmak.atlbitlab.com",
+    "http://localhost:3000",
+    "http://localhost:3001"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Health check endpoint
