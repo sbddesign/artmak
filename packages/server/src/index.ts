@@ -15,8 +15,9 @@ const io = new Server(server, {
       "http://localhost:3000",
       "http://localhost:3001"
     ],
-    methods: ["GET", "POST"],
-    credentials: true
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
   }
 });
 
@@ -31,13 +32,24 @@ app.use(cors({
     "http://localhost:3000",
     "http://localhost:3001"
   ],
-  credentials: true
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', players: gameManager.getGameState().players.length });
+  res.json({ 
+    status: 'ok', 
+    players: gameManager.getGameState().players.length,
+    cors_origins: [
+      process.env.CLIENT_URL || "http://localhost:3000",
+      "https://artmak.atlbitlab.com",
+      "http://localhost:3000",
+      "http://localhost:3001"
+    ]
+  });
 });
 
 // Socket.io connection handling

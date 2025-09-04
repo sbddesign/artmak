@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "pnpm install && cd packages/server && pnpm build && pnpm start",
+    "startCommand": "cd packages/server && pnpm install && pnpm build && pnpm start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
