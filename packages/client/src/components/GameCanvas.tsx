@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import Blob from './Blob';
+import WalletInfo from './WalletInfo';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -87,10 +88,13 @@ const GameCanvas: React.FC = () => {
         {connected ? '🟢 Connected' : '🔴 Disconnected'}
       </div>
 
+      {/* Wallet Info */}
+      <WalletInfo />
+
       {/* Player count */}
       <div style={{
         position: 'absolute',
-        top: '20px',
+        top: '80px',
         right: '20px',
         padding: '10px 15px',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
