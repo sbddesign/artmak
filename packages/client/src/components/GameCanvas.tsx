@@ -8,7 +8,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const { gameState, connected, moveTo } = useSocket();
-  const { balance, isCheckingBalance } = useArkWallet();
+  const { balance, isCheckingBalance, isBoarding, boardFunds } = useArkWallet();
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
@@ -112,7 +112,12 @@ const GameCanvas: React.FC = () => {
       </div>
 
       {/* Balance Display */}
-      <BalanceDisplay balance={balance} isCheckingBalance={isCheckingBalance} />
+      <BalanceDisplay 
+        balance={balance} 
+        isCheckingBalance={isCheckingBalance} 
+        isBoarding={isBoarding}
+        onBoardFunds={boardFunds}
+      />
 
       {/* Instructions */}
       <div style={{

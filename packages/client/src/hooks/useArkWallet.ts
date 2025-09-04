@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { SingleKey, Wallet } from '@arkade-os/sdk';
+import { SingleKey, Wallet, Ramps } from '@arkade-os/sdk';
 
 interface WalletData {
   address: string;
@@ -12,8 +12,13 @@ interface WalletData {
 
 interface BalanceData {
   available: number;
-  pending: number;
+  boarding: number;
+  confirmed: number;
   total: number;
+  unconfirmed: number;
+  preconfirmed: number;
+  recoverable: number;
+  settled: number;
   currency: string;
 }
 
@@ -23,6 +28,7 @@ interface ArkWalletState {
   isLoaded: boolean;
   isCreating: boolean;
   isCheckingBalance: boolean;
+  isBoarding: boolean;
   error: string | null;
 }
 
@@ -45,6 +51,7 @@ export const useArkWallet = () => {
     isLoaded: false,
     isCreating: false,
     isCheckingBalance: false,
+    isBoarding: false,
     error: null
   });
 
@@ -179,12 +186,20 @@ export const useArkWallet = () => {
       
       // Log the entire balance response
       console.log('💰 Balance Response:', balanceResponse);
+      console.log('🔍 Boarding object:', balanceResponse.boarding);
+      console.log('🔍 Available:', balanceResponse.available);
+      console.log('🔍 Total:', balanceResponse.total);
       
       // Parse the balance data (adjust based on actual SDK response structure)
       const balanceData: BalanceData = {
-        available: balanceResponse.available || balanceResponse.balance || 0,
-        pending: balanceResponse.pending || 0,
-        total: balanceResponse.total || balanceResponse.balance || 0,
+        available: balanceResponse.available || 0,
+        boarding: balanceResponse.boarding?.confirmed || 0,
+        confirmed: balanceResponse.boarding?.confirmed || 0,
+        total: balanceResponse.total || 0,
+        unconfirmed: balanceResponse.boarding?.unconfirmed || 0,
+        preconfirmed: balanceResponse.preconfirmed || 0,
+        recoverable: balanceResponse.recoverable || 0,
+        settled: balanceResponse.settled || 0,
         currency: balanceResponse.currency || 'sats'
       };
 
@@ -206,6 +221,63 @@ export const useArkWallet = () => {
       return null;
     }
   }, [state.wallet]);
+
+  // Board funds to make them available
+  const boardFunds = useCallback(async () => {
+    if (!state.wallet?.walletInstance) {
+      console.log('⚠️ No wallet instance available for boarding');
+      return null;
+    }
+
+    setState(prev => ({ ...prev, isBoarding: true, error: null }));
+
+    try {
+      // First, check for boarding UTXOs
+      console.log('🔍 Checking for boarding UTXOs...');
+      const boardingUtxos = await state.wallet.walletInstance.getBoardingUtxos();
+      console.log('🚢 Boarding UTXOs:', boardingUtxos);
+      
+      if (!boardingUtxos || boardingUtxos.length === 0) {
+        console.log('⚠️ No UTXOs available for boarding');
+        setState(prev => ({
+          ...prev,
+          isBoarding: false,
+          error: 'No UTXOs available for boarding'
+        }));
+        return null;
+      }
+
+      // Create Ramps instance and onboard funds
+      console.log('🚢 Creating Ramps instance...');
+      const ramps = new Ramps(state.wallet.walletInstance);
+      
+      console.log('🚢 Initiating onboard process...');
+      const onboardTxid = await ramps.onboard();
+      
+      // Log the entire boarding response
+      console.log('🚢 Onboard Transaction ID:', onboardTxid);
+      
+      // Refresh balance after boarding
+      console.log('🔄 Refreshing balance after boarding...');
+      await checkBalance();
+      
+      setState(prev => ({
+        ...prev,
+        isBoarding: false
+      }));
+
+      console.log('✅ Funds boarded successfully! Transaction ID:', onboardTxid);
+      return onboardTxid;
+    } catch (error) {
+      console.error('❌ Boarding failed:', error);
+      setState(prev => ({
+        ...prev,
+        isBoarding: false,
+        error: `Failed to board funds: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }));
+      return null;
+    }
+  }, [state.wallet, checkBalance]);
 
   // Clear wallet from localStorage
   const clearWallet = useCallback(() => {
@@ -254,6 +326,7 @@ export const useArkWallet = () => {
     generateWallet,
     loadWallet,
     clearWallet,
-    checkBalance
+    checkBalance,
+    boardFunds
   };
 };
