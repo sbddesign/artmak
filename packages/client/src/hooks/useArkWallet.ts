@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { SingleKey, Wallet } from '@arkade-os/sdk';
 
 interface WalletData {
   address: string;
@@ -6,6 +7,7 @@ interface WalletData {
   publicKey: string;
   privateKey: string;
   mnemonic?: string;
+  walletInstance?: any; // Store the actual wallet instance
 }
 
 interface ArkWalletState {
@@ -17,17 +19,8 @@ interface ArkWalletState {
 
 const WALLET_STORAGE_KEY = 'artmak-ark-wallet';
 
-// Simple address generation for demo purposes
-const generateRandomAddress = (): string => {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let result = 'ark1';
-  for (let i = 0; i < 50; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-const generateRandomKey = (): string => {
+// Generate a random private key for testing
+const generateRandomPrivateKey = (): string => {
   const chars = '0123456789abcdef';
   let result = '';
   for (let i = 0; i < 64; i++) {
@@ -49,24 +42,40 @@ export const useArkWallet = () => {
     setState(prev => ({ ...prev, isCreating: true, error: null }));
 
     try {
-      // Generate a new wallet (simplified for demo)
-      // In a real implementation, you would use the Arkade SDK properly
-      const address = generateRandomAddress();
-      const boardingAddress = generateRandomAddress();
-      const publicKey = generateRandomKey();
-      const privateKey = generateRandomKey();
-      const mnemonic = 'demo mnemonic phrase for ark wallet integration';
+      // Generate a random private key for testing
+      const privateKeyHex = generateRandomPrivateKey();
+      
+      // Create identity from private key
+      const identity = SingleKey.fromHex(privateKeyHex);
+      
+      // Create wallet instance using Mutinynet
+      const walletInstance = await Wallet.create({
+        identity,
+        arkServerUrl: 'https://mutinynet.arkade.sh',
+      });
+      
+      // Get addresses from the wallet
+      const address = await walletInstance.getAddress();
+      const boardingAddress = await walletInstance.getBoardingAddress();
       
       const walletData: WalletData = {
         address: address,
         boardingAddress: boardingAddress,
-        publicKey: publicKey,
-        privateKey: privateKey,
-        mnemonic: mnemonic
+        publicKey: identity.xOnlyPublicKey().toString(),
+        privateKey: privateKeyHex,
+        mnemonic: 'Generated for Mutinynet testing',
+        walletInstance: walletInstance
       };
 
-      // Save to localStorage
-      localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(walletData));
+      // Save to localStorage (excluding walletInstance which contains BigInt values)
+      const serializableData = {
+        address: walletData.address,
+        boardingAddress: walletData.boardingAddress,
+        publicKey: walletData.publicKey,
+        privateKey: walletData.privateKey,
+        mnemonic: walletData.mnemonic
+      };
+      localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(serializableData));
       
       setState(prev => ({
         ...prev,
@@ -95,23 +104,44 @@ export const useArkWallet = () => {
   }, []);
 
   // Load wallet from localStorage
-  const loadWallet = useCallback(() => {
+  const loadWallet = useCallback(async () => {
     try {
       const stored = localStorage.getItem(WALLET_STORAGE_KEY);
       if (stored) {
-        const walletData: WalletData = JSON.parse(stored);
-        setState(prev => ({
-          ...prev,
-          wallet: walletData,
-          isLoaded: true
-        }));
+        const storedData = JSON.parse(stored);
+        
+        // Recreate the wallet instance from stored private key
+        if (storedData.privateKey) {
+          const identity = SingleKey.fromHex(storedData.privateKey);
+          const walletInstance = await Wallet.create({
+            identity,
+            arkServerUrl: 'https://mutinynet.arkade.sh',
+          });
+          
+          // Create complete wallet data with fresh instance
+          const walletData: WalletData = {
+            address: storedData.address,
+            boardingAddress: storedData.boardingAddress,
+            publicKey: storedData.publicKey,
+            privateKey: storedData.privateKey,
+            mnemonic: storedData.mnemonic,
+            walletInstance: walletInstance
+          };
+          
+          setState(prev => ({
+            ...prev,
+            wallet: walletData,
+            isLoaded: true
+          }));
 
-        console.log('🟡 Wallet detected:', {
-          address: walletData.address,
-          boardingAddress: walletData.boardingAddress
-        });
+          console.log('🟡 Wallet detected:', {
+            address: walletData.address,
+            boardingAddress: walletData.boardingAddress,
+            network: 'Mutinynet'
+          });
 
-        return walletData;
+          return walletData;
+        }
       }
     } catch (error) {
       console.error('❌ Failed to load wallet from storage:', error);
@@ -136,11 +166,15 @@ export const useArkWallet = () => {
 
   // Initialize wallet on mount
   useEffect(() => {
-    const existingWallet = loadWallet();
-    if (!existingWallet) {
-      // No existing wallet found, create a new one
-      generateWallet().catch(console.error);
-    }
+    const initializeWallet = async () => {
+      const existingWallet = await loadWallet();
+      if (!existingWallet) {
+        // No existing wallet found, create a new one
+        generateWallet().catch(console.error);
+      }
+    };
+    
+    initializeWallet();
   }, [loadWallet, generateWallet]);
 
   return {

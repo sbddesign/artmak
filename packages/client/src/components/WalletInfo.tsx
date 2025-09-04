@@ -80,7 +80,7 @@ const WalletInfo: React.FC = () => {
         }}
       >
         <span>₿</span>
-        <span>Ark Wallet</span>
+        <span>Ark Wallet (Mutinynet)</span>
         <span style={{ fontSize: '12px' }}>
           {isExpanded ? '▲' : '▼'}
         </span>
@@ -100,7 +100,7 @@ const WalletInfo: React.FC = () => {
         }}>
           <div style={{ marginBottom: '10px' }}>
             <div style={{ color: '#4CAF50', fontWeight: 'bold', marginBottom: '5px' }}>
-              🟢 Wallet Connected
+              🟢 Wallet Connected (Mutinynet)
             </div>
           </div>
 
