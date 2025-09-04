@@ -13,8 +13,8 @@
 
 ### 3. Configure Build Settings
 Netlify should auto-detect from `netlify.toml`, but verify:
-- **Base directory**: `packages/client`
-- **Build command**: `pnpm build`
+- **Base directory**: `.` (root of repository)
+- **Build command**: `pnpm install && pnpm build`
 - **Publish directory**: `packages/client/dist`
 
 ### 4. Set Environment Variables

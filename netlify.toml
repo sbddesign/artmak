@@ -1,7 +1,7 @@
 [build]
-  base = "packages/client"
+  base = "."
   publish = "packages/client/dist"
-  command = "pnpm build"
+  command = "pnpm install && pnpm build"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -10,11 +10,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-[dev]
-  command = "pnpm dev"
-  port = 3000
-  publish = "packages/client/dist"
 
 # Headers for better performance
 [[headers]]
