@@ -1,0 +1,110 @@
+import { v4 as uuidv4 } from 'uuid';
+import { Player, GameState, MoveEvent } from '../types/game.js';
+
+export class GameManager {
+  private players: Map<string, Player> = new Map();
+  private gameState: GameState = {
+    players: [],
+    currentPlayer: null
+  };
+
+  private readonly colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+  ];
+
+  private getRandomColor(): string {
+    const usedColors = Array.from(this.players.values()).map(p => p.color);
+    const availableColors = this.colors.filter(color => !usedColors.includes(color));
+    
+    if (availableColors.length === 0) {
+      // If all colors are used, pick a random one
+      return this.colors[Math.floor(Math.random() * this.colors.length)];
+    }
+    
+    return availableColors[Math.floor(Math.random() * availableColors.length)];
+  }
+
+  private getRandomPosition(): { x: number; y: number } {
+    // Generate random position within a reasonable area
+    // Assuming a typical screen size of 1920x1080, but with some padding
+    const minX = 100;
+    const maxX = 1820;
+    const minY = 100;
+    const maxY = 980;
+    
+    return {
+      x: Math.random() * (maxX - minX) + minX,
+      y: Math.random() * (maxY - minY) + minY
+    };
+  }
+
+  addPlayer(socketId: string): Player {
+    const position = this.getRandomPosition();
+    const player: Player = {
+      id: socketId,
+      x: position.x,
+      y: position.y,
+      targetX: position.x,
+      targetY: position.y,
+      color: this.getRandomColor(),
+      isMoving: false
+    };
+
+    this.players.set(socketId, player);
+    this.updateGameState();
+    
+    return player;
+  }
+
+  removePlayer(socketId: string): void {
+    this.players.delete(socketId);
+    this.updateGameState();
+  }
+
+  movePlayer(socketId: string, moveEvent: MoveEvent): void {
+    const player = this.players.get(socketId);
+    if (player) {
+      player.targetX = moveEvent.x;
+      player.targetY = moveEvent.y;
+      player.isMoving = true;
+      this.players.set(socketId, player);
+      this.updateGameState();
+    }
+  }
+
+  updatePlayerPosition(socketId: string, x: number, y: number): void {
+    const player = this.players.get(socketId);
+    if (player) {
+      player.x = x;
+      player.y = y;
+      
+      // Check if player has reached target
+      const distance = Math.sqrt(
+        Math.pow(player.targetX - player.x, 2) + Math.pow(player.targetY - player.y, 2)
+      );
+      
+      if (distance < 5) { // Close enough to target
+        player.isMoving = false;
+      }
+      
+      this.players.set(socketId, player);
+      this.updateGameState();
+    }
+  }
+
+  getGameState(): GameState {
+    return this.gameState;
+  }
+
+  getPlayer(socketId: string): Player | undefined {
+    return this.players.get(socketId);
+  }
+
+  private updateGameState(): void {
+    this.gameState.players = Array.from(this.players.values());
+    // For now, we'll set the first player as current player
+    // In a real game, you might want to track this differently
+    this.gameState.currentPlayer = this.gameState.players[0] || null;
+  }
+}

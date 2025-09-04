@@ -1,0 +1,27 @@
+# Use Node.js 18 Alpine image
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+COPY packages/server/package.json ./packages/server/
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/server ./packages/server
+
+# Build the application
+RUN pnpm build
+
+# Expose port
+EXPOSE 3001
+
+# Start the application
+CMD ["pnpm", "start"]
