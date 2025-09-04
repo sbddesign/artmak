@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { GameManager } from './game/GameManager.js';
-import { MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from './types/game.js';
+import { MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent } from './types/game.js';
 
 const app = express();
 const server = createServer(app);
@@ -71,6 +71,70 @@ io.on('connection', (socket) => {
   // Handle player position updates (for smooth movement)
   socket.on('positionUpdate', (data: { x: number; y: number }) => {
     gameManager.updatePlayerPosition(socket.id, data.x, data.y);
+  });
+
+  // Handle Ark address registration
+  socket.on('registerArkAddress', (arkAddress: string) => {
+    console.log(`Player ${socket.id} registered Ark address: ${arkAddress}`);
+    gameManager.updatePlayerArkAddress(socket.id, arkAddress);
+    
+    // Notify all players about the Ark address update
+    const playerMoveEvent: PlayerMoveEvent = {
+      playerId: socket.id,
+      x: 0, // These will be updated by the client
+      y: 0
+    };
+    io.emit('playerArkAddressUpdated', { playerId: socket.id, arkAddress });
+  });
+
+  // Handle payment requests
+  socket.on('paymentRequest', async (paymentRequest: PaymentRequestEvent) => {
+    console.log(`Payment request from ${paymentRequest.fromPlayerId} to ${paymentRequest.toPlayerId} for ${paymentRequest.amount} sats`);
+    
+    try {
+      // Get the target player's Ark address
+      const targetPlayer = gameManager.getPlayer(paymentRequest.toPlayerId);
+      if (!targetPlayer || !targetPlayer.arkAddress) {
+        const errorResponse: PaymentResponseEvent = {
+          success: false,
+          error: 'Target player not found or has no Ark address',
+          fromPlayerId: paymentRequest.fromPlayerId,
+          toPlayerId: paymentRequest.toPlayerId,
+          amount: paymentRequest.amount
+        };
+        socket.emit('paymentResponse', errorResponse);
+        return;
+      }
+
+      // Forward the payment request to the target player
+      const targetSocket = io.sockets.sockets.get(paymentRequest.toPlayerId);
+      if (targetSocket) {
+        targetSocket.emit('paymentRequest', {
+          ...paymentRequest,
+          targetArkAddress: targetPlayer.arkAddress
+        });
+      }
+
+      // Send confirmation to the sender
+      const successResponse: PaymentResponseEvent = {
+        success: true,
+        fromPlayerId: paymentRequest.fromPlayerId,
+        toPlayerId: paymentRequest.toPlayerId,
+        amount: paymentRequest.amount
+      };
+      socket.emit('paymentResponse', successResponse);
+
+    } catch (error) {
+      console.error('Payment request error:', error);
+      const errorResponse: PaymentResponseEvent = {
+        success: false,
+        error: 'Payment request failed',
+        fromPlayerId: paymentRequest.fromPlayerId,
+        toPlayerId: paymentRequest.toPlayerId,
+        amount: paymentRequest.amount
+      };
+      socket.emit('paymentResponse', errorResponse);
+    }
   });
   
   // Handle disconnection

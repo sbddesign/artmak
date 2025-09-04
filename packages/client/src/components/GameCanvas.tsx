@@ -1,14 +1,34 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import { useArkWallet } from '../hooks/useArkWallet';
 import Blob from './Blob';
 import WalletInfo from './WalletInfo';
 import { BalanceDisplay } from './BalanceDisplay';
+import { PaymentModal } from './PaymentModal';
+import { Player } from '../types/game';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { gameState, connected, moveTo } = useSocket();
-  const { balance, isCheckingBalance, isBoarding, boardFunds } = useArkWallet();
+  const { gameState, connected, moveTo, registerArkAddress, sendPaymentRequest } = useSocket();
+  const { balance, isCheckingBalance, isBoarding, boardFunds, wallet, sendPayment } = useArkWallet();
+  
+  // Payment modal state
+  const [paymentModal, setPaymentModal] = useState<{
+    isOpen: boolean;
+    targetPlayer: Player | null;
+    isSending: boolean;
+  }>({
+    isOpen: false,
+    targetPlayer: null,
+    isSending: false
+  });
+
+  // Register Ark address when wallet is available
+  useEffect(() => {
+    if (wallet?.address && connected) {
+      registerArkAddress(wallet.address);
+    }
+  }, [wallet?.address, connected, registerArkAddress]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
@@ -53,6 +73,68 @@ const GameCanvas: React.FC = () => {
 
     moveTo(x, y);
   }, [connected, moveTo]);
+
+  const handleBlobClick = useCallback((player: Player) => {
+    console.log('🎯 Blob clicked:', player);
+    setPaymentModal({
+      isOpen: true,
+      targetPlayer: player,
+      isSending: false
+    });
+  }, []);
+
+  const handleSendPayment = useCallback(async (amount: number, message?: string) => {
+    if (!paymentModal.targetPlayer || !paymentModal.targetPlayer.arkAddress) {
+      console.error('❌ No target player or Ark address available');
+      return;
+    }
+
+    setPaymentModal(prev => ({ ...prev, isSending: true }));
+
+    try {
+      console.log('🚀 Executing Ark payment:', {
+        to: paymentModal.targetPlayer.arkAddress,
+        amount,
+        message
+      });
+
+      // Execute the actual Ark payment
+      const paymentResult = await sendPayment(
+        paymentModal.targetPlayer.arkAddress,
+        amount,
+        message
+      );
+
+      console.log('✅ Ark payment completed:', paymentResult);
+
+      // Also send payment notification through socket (for game coordination)
+      sendPaymentRequest(paymentModal.targetPlayer.id, amount, message);
+      
+      // Close modal after successful payment
+      setTimeout(() => {
+        setPaymentModal({
+          isOpen: false,
+          targetPlayer: null,
+          isSending: false
+        });
+      }, 2000);
+
+    } catch (error) {
+      console.error('❌ Ark payment failed:', error);
+      setPaymentModal(prev => ({ ...prev, isSending: false }));
+      
+      // Show error to user (you could add a toast notification here)
+      alert(`Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, [paymentModal.targetPlayer, sendPayment, sendPaymentRequest]);
+
+  const handleClosePaymentModal = useCallback(() => {
+    setPaymentModal({
+      isOpen: false,
+      targetPlayer: null,
+      isSending: false
+    });
+  }, []);
 
   return (
     <div
@@ -144,8 +226,18 @@ const GameCanvas: React.FC = () => {
           key={player.id}
           player={player}
           isCurrentPlayer={player.id === gameState.currentPlayer?.id}
+          onBlobClick={handleBlobClick}
         />
       ))}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        targetPlayer={paymentModal.targetPlayer}
+        isOpen={paymentModal.isOpen}
+        onClose={handleClosePaymentModal}
+        onSendPayment={handleSendPayment}
+        isSending={paymentModal.isSending}
+      />
     </div>
   );
 };

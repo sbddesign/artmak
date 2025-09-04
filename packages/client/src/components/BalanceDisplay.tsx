@@ -50,12 +50,6 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
   };
 
   const hasUnboardedFunds = balance.confirmed > 0 || balance.boarding > 0;
-  
-  // Debug logging
-  console.log('🎨 BalanceDisplay - balance:', balance);
-  console.log('🎨 BalanceDisplay - confirmed:', balance.confirmed);
-  console.log('🎨 BalanceDisplay - boarding:', balance.boarding);
-  console.log('🎨 BalanceDisplay - hasUnboardedFunds:', hasUnboardedFunds);
 
   return (
     <div style={{

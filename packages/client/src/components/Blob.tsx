@@ -4,9 +4,10 @@ import { Player } from '../types/game';
 interface BlobProps {
   player: Player;
   isCurrentPlayer?: boolean;
+  onBlobClick?: (player: Player) => void;
 }
 
-const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false }) => {
+const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClick }) => {
   const blobRef = useRef<HTMLDivElement>(null);
   const [currentX, setCurrentX] = useState(player.x);
   const [currentY, setCurrentY] = useState(player.y);
@@ -67,10 +68,18 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false }) => {
     }
   }, [currentX, currentY]);
 
+  const handleBlobClick = (event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent canvas click
+    if (onBlobClick && !isCurrentPlayer) {
+      onBlobClick(player);
+    }
+  };
+
   return (
     <div
       ref={blobRef}
       className={`blob ${isCurrentPlayer ? 'current-player' : ''}`}
+      onClick={handleBlobClick}
       style={{
         position: 'absolute',
         width: '60px',
@@ -80,7 +89,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false }) => {
         border: isCurrentPlayer ? '3px solid #fff' : '2px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
         transition: 'none',
-        cursor: 'pointer',
+        cursor: isCurrentPlayer ? 'default' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

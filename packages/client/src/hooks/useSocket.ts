@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { GameState, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from '../types/game';
+import { GameState, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent } from '../types/game';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
 
@@ -65,6 +65,30 @@ export const useSocket = () => {
       }));
     });
 
+    newSocket.on('playerArkAddressUpdated', (data: { playerId: string; arkAddress: string }) => {
+      setGameState(prev => ({
+        ...prev,
+        players: prev.players.map(p => 
+          p.id === data.playerId 
+            ? { ...p, arkAddress: data.arkAddress }
+            : p
+        ),
+        currentPlayer: prev.currentPlayer?.id === data.playerId 
+          ? { ...prev.currentPlayer, arkAddress: data.arkAddress }
+          : prev.currentPlayer
+      }));
+    });
+
+    newSocket.on('paymentRequest', (paymentRequest: PaymentRequestEvent & { targetArkAddress?: string }) => {
+      console.log('💰 Payment request received:', paymentRequest);
+      // This will be handled by the payment component
+    });
+
+    newSocket.on('paymentResponse', (response: PaymentResponseEvent) => {
+      console.log('💰 Payment response:', response);
+      // This will be handled by the payment component
+    });
+
     return () => {
       newSocket.close();
     };
@@ -90,10 +114,30 @@ export const useSocket = () => {
     }
   };
 
+  const registerArkAddress = (arkAddress: string) => {
+    if (socket && connected) {
+      socket.emit('registerArkAddress', arkAddress);
+    }
+  };
+
+  const sendPaymentRequest = (toPlayerId: string, amount: number, message?: string) => {
+    if (socket && connected && currentPlayerIdRef.current) {
+      const paymentRequest: PaymentRequestEvent = {
+        fromPlayerId: currentPlayerIdRef.current,
+        toPlayerId,
+        amount,
+        message
+      };
+      socket.emit('paymentRequest', paymentRequest);
+    }
+  };
+
   return {
     socket,
     gameState,
     connected,
-    moveTo
+    moveTo,
+    registerArkAddress,
+    sendPaymentRequest
   };
 };

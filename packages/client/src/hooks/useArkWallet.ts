@@ -184,11 +184,10 @@ export const useArkWallet = () => {
       // Get balance from the wallet instance
       const balanceResponse = await state.wallet.walletInstance.getBalance();
       
-      // Log the entire balance response
-      console.log('💰 Balance Response:', balanceResponse);
-      console.log('🔍 Boarding object:', balanceResponse.boarding);
-      console.log('🔍 Available:', balanceResponse.available);
-      console.log('🔍 Total:', balanceResponse.total);
+      // Log the entire balance response (only on first load or significant changes)
+      if (!state.balance || state.balance.available !== (balanceResponse.available || 0)) {
+        console.log('💰 Balance Response:', balanceResponse);
+      }
       
       // Parse the balance data (adjust based on actual SDK response structure)
       const balanceData: BalanceData = {
@@ -209,7 +208,10 @@ export const useArkWallet = () => {
         isCheckingBalance: false
       }));
 
-      console.log('✅ Balance updated:', balanceData);
+      // Only log balance updates when there are significant changes
+      if (!state.balance || state.balance.available !== balanceData.available) {
+        console.log('✅ Balance updated:', balanceData);
+      }
       return balanceData;
     } catch (error) {
       console.error('❌ Balance check failed:', error);
@@ -221,6 +223,35 @@ export const useArkWallet = () => {
       return null;
     }
   }, [state.wallet]);
+
+  // Send payment to another Ark address
+  const sendPayment = useCallback(async (toAddress: string, amount: number, message?: string) => {
+    if (!state.wallet?.walletInstance) {
+      console.log('⚠️ No wallet instance available for payment');
+      return null;
+    }
+
+    try {
+      console.log('💸 Sending payment:', { toAddress, amount, message });
+      
+      // Send payment using the Arkade SDK
+      const paymentResult = await state.wallet.walletInstance.sendBitcoin({
+        address: toAddress,
+        amount: amount,
+        memo: message || 'Payment from Artmak game'
+      });
+      
+      console.log('✅ Payment sent successfully:', paymentResult);
+      
+      // Refresh balance after payment
+      await checkBalance();
+      
+      return paymentResult;
+    } catch (error) {
+      console.error('❌ Payment failed:', error);
+      throw error;
+    }
+  }, [state.wallet, checkBalance]);
 
   // Board funds to make them available
   const boardFunds = useCallback(async () => {
@@ -327,6 +358,7 @@ export const useArkWallet = () => {
     loadWallet,
     clearWallet,
     checkBalance,
-    boardFunds
+    boardFunds,
+    sendPayment
   };
 };

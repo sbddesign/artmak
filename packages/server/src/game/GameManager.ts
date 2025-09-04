@@ -101,6 +101,15 @@ export class GameManager {
     return this.players.get(socketId);
   }
 
+  updatePlayerArkAddress(socketId: string, arkAddress: string): void {
+    const player = this.players.get(socketId);
+    if (player) {
+      player.arkAddress = arkAddress;
+      this.players.set(socketId, player);
+      this.updateGameState();
+    }
+  }
+
   private updateGameState(): void {
     this.gameState.players = Array.from(this.players.values());
     // Don't set a current player on the server - each client tracks their own
