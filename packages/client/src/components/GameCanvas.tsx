@@ -30,21 +30,18 @@ const GameCanvas: React.FC = () => {
   const handleCanvasTouch = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
 
-    event.preventDefault();
     const rect = canvasRef.current.getBoundingClientRect();
     
     // Check if touches exist and has at least one touch
     if (!event.touches || event.touches.length === 0) {
-      console.warn('No touch data available');
-      return;
+      return; // Silently return instead of logging warning
     }
     
     const touch = event.touches[0];
     
     // Additional safety check for touch properties
     if (typeof touch.clientX === 'undefined' || typeof touch.clientY === 'undefined') {
-      console.warn('Touch coordinates not available');
-      return;
+      return; // Silently return instead of logging warning
     }
     
     const x = touch.clientX - rect.left;
@@ -58,7 +55,6 @@ const GameCanvas: React.FC = () => {
       ref={canvasRef}
       onClick={handleCanvasClick}
       onMouseDown={handleCanvasMouseDown}
-      onTouchStart={handleCanvasTouch}
       onTouchEnd={handleCanvasTouch}
       style={{
         position: 'relative',
@@ -68,7 +64,10 @@ const GameCanvas: React.FC = () => {
         background: 'linear-gradient(135deg, #87CEEB 0%, #98FB98 100%)',
         cursor: 'crosshair',
         overflow: 'hidden',
-        touchAction: 'none'
+        touchAction: 'none',
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
       }}
     >
       {/* Connection status */}
