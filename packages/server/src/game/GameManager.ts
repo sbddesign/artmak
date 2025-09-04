@@ -25,22 +25,17 @@ export class GameManager {
     return availableColors[Math.floor(Math.random() * availableColors.length)];
   }
 
-  private getRandomPosition(): { x: number; y: number } {
-    // Generate random position within a reasonable area
-    // Assuming a typical screen size of 1920x1080, but with some padding
-    const minX = 100;
-    const maxX = 1820;
-    const minY = 100;
-    const maxY = 980;
-    
+  private getStartingPosition(): { x: number; y: number } {
+    // All players start in the center of the screen
+    // Assuming a typical screen size of 1920x1080
     return {
-      x: Math.random() * (maxX - minX) + minX,
-      y: Math.random() * (maxY - minY) + minY
+      x: 960, // Center X
+      y: 540  // Center Y
     };
   }
 
   addPlayer(socketId: string): Player {
-    const position = this.getRandomPosition();
+    const position = this.getStartingPosition();
     const player: Player = {
       id: socketId,
       x: position.x,

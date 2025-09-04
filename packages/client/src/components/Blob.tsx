@@ -21,7 +21,17 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
     return Math.max(baseSize, baseSize * sizeMultiplier);
   }, [player.availableBalance]);
 
+  // Calculate dynamic movement speed based on balance
+  const calculateSpeed = useCallback(() => {
+    const baseSpeed = 4; // Increased default speed in pixels per frame
+    const balance = player.availableBalance || 0;
+    const speedReduction = (balance / 1000) * 0.05; // 5% reduction per 1000 sats
+    const speedMultiplier = Math.max(0.1, 1 - speedReduction); // Minimum 10% of original speed
+    return baseSpeed * speedMultiplier;
+  }, [player.availableBalance]);
+
   const blobSize = calculateSize();
+  const movementSpeed = calculateSpeed();
 
   useEffect(() => {
     // Initialize position when player first appears
@@ -49,10 +59,9 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         return;
       }
 
-      // Move towards target (smooth movement speed)
-      const speed = 2; // pixels per frame
-      const moveX = (dx / distance) * speed;
-      const moveY = (dy / distance) * speed;
+      // Move towards target (dynamic movement speed based on balance)
+      const moveX = (dx / distance) * movementSpeed;
+      const moveY = (dy / distance) * movementSpeed;
 
       setCurrentX(prev => prev + moveX);
       setCurrentY(prev => prev + moveY);
@@ -69,7 +78,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY]);
+  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY, movementSpeed]);
 
   useEffect(() => {
     if (blobRef.current) {
@@ -157,7 +166,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         }} />
       </div>
       
-      {/* Balance indicator */}
+      {/* Balance and speed indicator */}
       {player.availableBalance !== undefined && player.availableBalance > 0 && (
         <div style={{
           position: 'absolute',
@@ -173,6 +182,9 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
           zIndex: 20
         }}>
           {player.availableBalance.toLocaleString()} sats
+          <div style={{ fontSize: '8px', opacity: 0.8 }}>
+            Speed: {((movementSpeed / 4) * 100).toFixed(0)}%
+          </div>
         </div>
       )}
     </div>
