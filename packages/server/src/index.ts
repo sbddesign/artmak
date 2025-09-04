@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { GameManager } from './game/GameManager.js';
-import { MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent } from './types/game.js';
+import { MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent, BalanceUpdateEvent } from './types/game.js';
 
 const app = express();
 const server = createServer(app);
@@ -85,6 +85,15 @@ io.on('connection', (socket) => {
       y: 0
     };
     io.emit('playerArkAddressUpdated', { playerId: socket.id, arkAddress });
+  });
+
+  // Handle balance updates
+  socket.on('balanceUpdate', (balanceUpdate: BalanceUpdateEvent) => {
+    console.log(`Player ${balanceUpdate.playerId} balance updated: ${balanceUpdate.availableBalance} sats`);
+    gameManager.updatePlayerBalance(balanceUpdate.playerId, balanceUpdate.availableBalance);
+    
+    // Notify all players about the balance update
+    io.emit('balanceUpdated', balanceUpdate);
   });
 
   // Handle payment requests

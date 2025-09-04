@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Player } from '../types/game';
 
 interface BlobProps {
@@ -12,6 +12,23 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
   const [currentX, setCurrentX] = useState(player.x);
   const [currentY, setCurrentY] = useState(player.y);
   const animationRef = useRef<number>();
+
+  // Calculate dynamic size based on balance
+  const calculateSize = useCallback(() => {
+    const baseSize = 60; // Default size in pixels
+    const balance = player.availableBalance || 0;
+    const sizeMultiplier = 1 + (balance / 1000) * 0.005; // 0.5% increase per 1000 sats
+    const calculatedSize = Math.max(baseSize, baseSize * sizeMultiplier);
+    
+    // Log sizing calculation for debugging
+    if (balance > 0) {
+      console.log(`🎯 Player ${player.id}: ${balance} sats → ${calculatedSize.toFixed(1)}px (${((sizeMultiplier - 1) * 100).toFixed(1)}% increase)`);
+    }
+    
+    return calculatedSize;
+  }, [player.availableBalance, player.id]);
+
+  const blobSize = calculateSize();
 
   useEffect(() => {
     // Initialize position when player first appears
@@ -100,13 +117,13 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
       onTouchStart={handleBlobTouch}
       style={{
         position: 'absolute',
-        width: '60px',
-        height: '60px',
+        width: `${blobSize}px`,
+        height: `${blobSize}px`,
         borderRadius: '50%',
         backgroundColor: player.color,
         border: isCurrentPlayer ? '3px solid #fff' : '2px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-        transition: 'none',
+        transition: 'width 0.3s ease, height 0.3s ease',
         cursor: isCurrentPlayer ? 'default' : 'pointer',
         display: 'flex',
         alignItems: 'center',
@@ -117,26 +134,26 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
     >
       {/* Smiley face */}
       <div style={{
-        width: '30px',
-        height: '30px',
+        width: `${blobSize * 0.5}px`, // Scale smiley face proportionally
+        height: `${blobSize * 0.5}px`,
         position: 'relative'
       }}>
         {/* Eyes */}
         <div style={{
           position: 'absolute',
-          top: '6px',
-          left: '6px',
-          width: '4px',
-          height: '4px',
+          top: `${blobSize * 0.1}px`,
+          left: `${blobSize * 0.1}px`,
+          width: `${blobSize * 0.067}px`,
+          height: `${blobSize * 0.067}px`,
           backgroundColor: '#333',
           borderRadius: '50%'
         }} />
         <div style={{
           position: 'absolute',
-          top: '6px',
-          right: '6px',
-          width: '4px',
-          height: '4px',
+          top: `${blobSize * 0.1}px`,
+          right: `${blobSize * 0.1}px`,
+          width: `${blobSize * 0.067}px`,
+          height: `${blobSize * 0.067}px`,
           backgroundColor: '#333',
           borderRadius: '50%'
         }} />
@@ -144,16 +161,35 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         {/* Smile */}
         <div style={{
           position: 'absolute',
-          bottom: '6px',
+          bottom: `${blobSize * 0.1}px`,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '18px',
-          height: '9px',
-          border: '2px solid #333',
+          width: `${blobSize * 0.3}px`,
+          height: `${blobSize * 0.15}px`,
+          border: `${blobSize * 0.033}px solid #333`,
           borderTop: 'none',
-          borderRadius: '0 0 18px 18px'
+          borderRadius: `0 0 ${blobSize * 0.3}px ${blobSize * 0.3}px`
         }} />
       </div>
+      
+      {/* Balance indicator */}
+      {player.availableBalance !== undefined && player.availableBalance > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '-25px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: '10px',
+          color: '#fff',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          padding: '2px 6px',
+          borderRadius: '10px',
+          whiteSpace: 'nowrap',
+          zIndex: 20
+        }}>
+          {player.availableBalance.toLocaleString()} sats
+        </div>
+      )}
     </div>
   );
 };

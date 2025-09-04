@@ -7,6 +7,7 @@ export interface Player {
   color: string;
   isMoving: boolean;
   arkAddress?: string;
+  availableBalance?: number; // Balance in sats for dynamic sizing
 }
 
 export interface GameState {
@@ -47,4 +48,9 @@ export interface PaymentResponseEvent {
   fromPlayerId: string;
   toPlayerId: string;
   amount: number;
+}
+
+export interface BalanceUpdateEvent {
+  playerId: string;
+  availableBalance: number;
 }

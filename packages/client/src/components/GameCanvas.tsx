@@ -9,7 +9,7 @@ import { Player } from '../types/game';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { gameState, connected, moveTo, registerArkAddress, sendPaymentRequest } = useSocket();
+  const { gameState, connected, moveTo, registerArkAddress, sendPaymentRequest, reportBalance } = useSocket();
   const { balance, isCheckingBalance, isBoarding, boardFunds, wallet, sendPayment } = useArkWallet();
   
   // Toast state
@@ -30,6 +30,14 @@ const GameCanvas: React.FC = () => {
       registerArkAddress(wallet.address);
     }
   }, [wallet?.address, connected, registerArkAddress]);
+
+  // Report balance changes to server
+  useEffect(() => {
+    if (balance?.available !== undefined && connected) {
+      console.log('📊 Reporting balance to server:', balance.available);
+      reportBalance(balance.available);
+    }
+  }, [balance?.available, connected, reportBalance]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     console.log('🖱️ Canvas click handler called, isBlobClick:', isBlobClick);

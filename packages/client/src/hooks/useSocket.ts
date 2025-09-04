@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { GameState, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent } from '../types/game';
+import { GameState, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent, PaymentRequestEvent, PaymentResponseEvent, BalanceUpdateEvent } from '../types/game';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3002';
 
@@ -89,6 +89,20 @@ export const useSocket = () => {
       // This will be handled by the payment component
     });
 
+    newSocket.on('balanceUpdated', (event: BalanceUpdateEvent) => {
+      setGameState(prev => ({
+        ...prev,
+        players: prev.players.map(p => 
+          p.id === event.playerId 
+            ? { ...p, availableBalance: event.availableBalance }
+            : p
+        ),
+        currentPlayer: prev.currentPlayer?.id === event.playerId 
+          ? { ...prev.currentPlayer, availableBalance: event.availableBalance }
+          : prev.currentPlayer
+      }));
+    });
+
     return () => {
       newSocket.close();
     };
@@ -132,12 +146,23 @@ export const useSocket = () => {
     }
   };
 
+  const reportBalance = (availableBalance: number) => {
+    if (socket && connected && currentPlayerIdRef.current) {
+      const balanceUpdate: BalanceUpdateEvent = {
+        playerId: currentPlayerIdRef.current,
+        availableBalance
+      };
+      socket.emit('balanceUpdate', balanceUpdate);
+    }
+  };
+
   return {
     socket,
     gameState,
     connected,
     moveTo,
     registerArkAddress,
-    sendPaymentRequest
+    sendPaymentRequest,
+    reportBalance
   };
 };

@@ -110,6 +110,15 @@ export class GameManager {
     }
   }
 
+  updatePlayerBalance(socketId: string, availableBalance: number): void {
+    const player = this.players.get(socketId);
+    if (player) {
+      player.availableBalance = availableBalance;
+      this.players.set(socketId, player);
+      this.updateGameState();
+    }
+  }
+
   private updateGameState(): void {
     this.gameState.players = Array.from(this.players.values());
     // Don't set a current player on the server - each client tracks their own
