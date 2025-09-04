@@ -4,7 +4,7 @@ import { useArkWallet } from '../hooks/useArkWallet';
 import Blob from './Blob';
 import WalletInfo from './WalletInfo';
 import { BalanceDisplay } from './BalanceDisplay';
-import { PaymentModal } from './PaymentModal';
+import { Toast } from './Toast';
 import { Player } from '../types/game';
 
 const GameCanvas: React.FC = () => {
@@ -12,15 +12,13 @@ const GameCanvas: React.FC = () => {
   const { gameState, connected, moveTo, registerArkAddress, sendPaymentRequest } = useSocket();
   const { balance, isCheckingBalance, isBoarding, boardFunds, wallet, sendPayment } = useArkWallet();
   
-  // Payment modal state
-  const [paymentModal, setPaymentModal] = useState<{
-    isOpen: boolean;
-    targetPlayer: Player | null;
-    isSending: boolean;
+  // Toast state
+  const [toast, setToast] = useState<{
+    isVisible: boolean;
+    message: string;
   }>({
-    isOpen: false,
-    targetPlayer: null,
-    isSending: false
+    isVisible: false,
+    message: ''
   });
 
   // Register Ark address when wallet is available
@@ -74,65 +72,45 @@ const GameCanvas: React.FC = () => {
     moveTo(x, y);
   }, [connected, moveTo]);
 
-  const handleBlobClick = useCallback((player: Player) => {
+  const handleBlobClick = useCallback(async (player: Player) => {
     console.log('🎯 Blob clicked:', player);
-    setPaymentModal({
-      isOpen: true,
-      targetPlayer: player,
-      isSending: false
-    });
-  }, []);
-
-  const handleSendPayment = useCallback(async (amount: number, message?: string) => {
-    if (!paymentModal.targetPlayer || !paymentModal.targetPlayer.arkAddress) {
-      console.error('❌ No target player or Ark address available');
+    
+    if (!player.arkAddress) {
+      console.log('❌ Target player has no Ark address');
       return;
     }
 
-    setPaymentModal(prev => ({ ...prev, isSending: true }));
-
     try {
-      console.log('🚀 Executing Ark payment:', {
-        to: paymentModal.targetPlayer.arkAddress,
-        amount,
-        message
-      });
-
-      // Execute the actual Ark payment
+      console.log('🚀 Sending one-click payment to:', player.arkAddress);
+      
+      // Send 1000 sats payment
       const paymentResult = await sendPayment(
-        paymentModal.targetPlayer.arkAddress,
-        amount,
-        message
+        player.arkAddress,
+        1000,
+        'One-click payment from Artmak game'
       );
 
-      console.log('✅ Ark payment completed:', paymentResult);
+      console.log('✅ Payment successful:', paymentResult);
+      
+      // Show success toast
+      setToast({
+        isVisible: true,
+        message: 'You shrunk! Go faster!'
+      });
 
       // Also send payment notification through socket (for game coordination)
-      sendPaymentRequest(paymentModal.targetPlayer.id, amount, message);
-      
-      // Close modal after successful payment
-      setTimeout(() => {
-        setPaymentModal({
-          isOpen: false,
-          targetPlayer: null,
-          isSending: false
-        });
-      }, 2000);
+      sendPaymentRequest(player.id, 1000, 'One-click payment');
 
     } catch (error) {
-      console.error('❌ Ark payment failed:', error);
-      setPaymentModal(prev => ({ ...prev, isSending: false }));
-      
-      // Show error to user (you could add a toast notification here)
-      alert(`Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Payment failed:', error);
+      // Could show error toast here if desired
     }
-  }, [paymentModal.targetPlayer, sendPayment, sendPaymentRequest]);
+  }, [sendPayment, sendPaymentRequest]);
 
-  const handleClosePaymentModal = useCallback(() => {
-    setPaymentModal({
-      isOpen: false,
-      targetPlayer: null,
-      isSending: false
+  const handleCloseToast = useCallback(() => {
+    setToast({
+      isVisible: false,
+      message: ''
     });
   }, []);
 
@@ -230,13 +208,12 @@ const GameCanvas: React.FC = () => {
         />
       ))}
 
-      {/* Payment Modal */}
-      <PaymentModal
-        targetPlayer={paymentModal.targetPlayer}
-        isOpen={paymentModal.isOpen}
-        onClose={handleClosePaymentModal}
-        onSendPayment={handleSendPayment}
-        isSending={paymentModal.isSending}
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={handleCloseToast}
+        duration={3000}
       />
     </div>
   );
