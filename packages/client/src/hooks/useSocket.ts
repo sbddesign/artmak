@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, Player, MoveEvent, PlayerJoinEvent, PlayerLeaveEvent, PlayerMoveEvent } from '../types/game';
 
@@ -11,6 +11,7 @@ export const useSocket = () => {
     currentPlayer: null
   });
   const [connected, setConnected] = useState(false);
+  const currentPlayerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const newSocket = io(SERVER_URL);
@@ -19,6 +20,7 @@ export const useSocket = () => {
     newSocket.on('connect', () => {
       console.log('Connected to server');
       setConnected(true);
+      currentPlayerIdRef.current = newSocket.id;
     });
 
     newSocket.on('disconnect', () => {
@@ -27,20 +29,25 @@ export const useSocket = () => {
     });
 
     newSocket.on('gameState', (state: GameState) => {
-      setGameState(state);
+      setGameState(prev => ({
+        ...state,
+        currentPlayer: state.players.find(p => p.id === currentPlayerIdRef.current) || null
+      }));
     });
 
     newSocket.on('playerJoined', (event: PlayerJoinEvent) => {
       setGameState(prev => ({
         ...prev,
-        players: [...prev.players, event.player]
+        players: [...prev.players, event.player],
+        currentPlayer: event.player.id === currentPlayerIdRef.current ? event.player : prev.currentPlayer
       }));
     });
 
     newSocket.on('playerLeft', (event: PlayerLeaveEvent) => {
       setGameState(prev => ({
         ...prev,
-        players: prev.players.filter(p => p.id !== event.playerId)
+        players: prev.players.filter(p => p.id !== event.playerId),
+        currentPlayer: prev.currentPlayer?.id === event.playerId ? null : prev.currentPlayer
       }));
     });
 
@@ -51,7 +58,10 @@ export const useSocket = () => {
           p.id === event.playerId 
             ? { ...p, targetX: event.x, targetY: event.y, isMoving: true }
             : p
-        )
+        ),
+        currentPlayer: prev.currentPlayer?.id === event.playerId 
+          ? { ...prev.currentPlayer, targetX: event.x, targetY: event.y, isMoving: true }
+          : prev.currentPlayer
       }));
     });
 
@@ -61,7 +71,7 @@ export const useSocket = () => {
   }, []);
 
   const moveTo = (x: number, y: number) => {
-    if (socket && connected) {
+    if (socket && connected && currentPlayerIdRef.current) {
       const moveEvent: MoveEvent = { x, y };
       socket.emit('move', moveEvent);
       
@@ -69,10 +79,13 @@ export const useSocket = () => {
       setGameState(prev => ({
         ...prev,
         players: prev.players.map(p => 
-          p.id === prev.currentPlayer?.id 
+          p.id === currentPlayerIdRef.current 
             ? { ...p, targetX: x, targetY: y, isMoving: true }
             : p
-        )
+        ),
+        currentPlayer: prev.currentPlayer?.id === currentPlayerIdRef.current 
+          ? { ...prev.currentPlayer, targetX: x, targetY: y, isMoving: true }
+          : prev.currentPlayer
       }));
     }
   };

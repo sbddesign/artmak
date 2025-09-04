@@ -103,8 +103,7 @@ export class GameManager {
 
   private updateGameState(): void {
     this.gameState.players = Array.from(this.players.values());
-    // For now, we'll set the first player as current player
-    // In a real game, you might want to track this differently
-    this.gameState.currentPlayer = this.gameState.players[0] || null;
+    // Don't set a current player on the server - each client tracks their own
+    this.gameState.currentPlayer = null;
   }
 }
