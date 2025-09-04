@@ -243,8 +243,24 @@ export const useArkWallet = () => {
       
       console.log('✅ Payment sent successfully:', paymentResult);
       
-      // Refresh balance after payment
-      await checkBalance();
+      // Immediately update local balance (optimistic update)
+      setState(prev => {
+        if (prev.balance?.available !== undefined) {
+          return {
+            ...prev,
+            balance: {
+              ...prev.balance,
+              available: Math.max(0, prev.balance.available - amount)
+            }
+          };
+        }
+        return prev;
+      });
+      
+      // Also refresh balance from network after a short delay (in case of discrepancies)
+      setTimeout(async () => {
+        await checkBalance();
+      }, 2000);
       
       return paymentResult;
     } catch (error) {
