@@ -4,24 +4,23 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-COPY packages/server/package.json ./packages/server/
-
 # Install pnpm
 RUN npm install -g pnpm
 
+# Copy package.json first for better caching
+COPY package.json ./
+
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Copy source code
-COPY packages/server ./packages/server
+COPY . .
 
 # Build the application
 RUN pnpm build
 
 # Expose port
-EXPOSE 3001
+EXPOSE 3002
 
 # Start the application
 CMD ["pnpm", "start"]

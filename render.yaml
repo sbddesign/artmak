@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: artmak-server
+    env: docker
+    dockerfilePath: ./packages/server/Dockerfile
+    dockerContext: ./packages/server
+    plan: starter
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: CLIENT_URL
+        value: https://artmak.netlify.app
+    healthCheckPath: /health
