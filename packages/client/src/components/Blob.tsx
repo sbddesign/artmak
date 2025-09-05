@@ -5,9 +5,10 @@ interface BlobProps {
   player: Player;
   isCurrentPlayer?: boolean;
   onBlobClick?: (player: Player) => void;
+  viewportCenter: { x: number; y: number };
 }
 
-const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClick }) => {
+const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClick, viewportCenter }) => {
   const blobRef = useRef<HTMLDivElement>(null);
   const [currentX, setCurrentX] = useState(player.x);
   const [currentY, setCurrentY] = useState(player.y);
@@ -36,22 +37,27 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
   useEffect(() => {
     // Initialize position when player first appears
     if (blobRef.current && !animationRef.current) {
-      setCurrentX(player.x);
-      setCurrentY(player.y);
+      // Transform server coordinates to viewport coordinates
+      setCurrentX(player.x + viewportCenter.x);
+      setCurrentY(player.y + viewportCenter.y);
     }
-  }, [player.id]);
+  }, [player.id, viewportCenter]);
 
   useEffect(() => {
     // Animate to target position
     const animateToTarget = () => {
-      const dx = player.targetX - currentX;
-      const dy = player.targetY - currentY;
+      // Transform server target coordinates to viewport coordinates
+      const targetViewportX = player.targetX + viewportCenter.x;
+      const targetViewportY = player.targetY + viewportCenter.y;
+      
+      const dx = targetViewportX - currentX;
+      const dy = targetViewportY - currentY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance < 1) {
         // Close enough to target
-        setCurrentX(player.targetX);
-        setCurrentY(player.targetY);
+        setCurrentX(targetViewportX);
+        setCurrentY(targetViewportY);
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
           animationRef.current = undefined;
@@ -78,7 +84,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY, movementSpeed]);
+  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY, movementSpeed, viewportCenter]);
 
   useEffect(() => {
     if (blobRef.current) {

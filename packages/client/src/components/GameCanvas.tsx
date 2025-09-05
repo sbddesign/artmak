@@ -12,6 +12,9 @@ const GameCanvas: React.FC = () => {
   const { gameState, connected, moveTo, registerArkAddress, sendPaymentRequest, reportBalance } = useSocket();
   const { balance, isCheckingBalance, isBoarding, boardFunds, wallet, sendPayment } = useArkWallet();
   
+  // Viewport center coordinates for coordinate transformation
+  const [viewportCenter, setViewportCenter] = useState({ x: 0, y: 0 });
+  
   // Toast state
   const [toast, setToast] = useState<{
     isVisible: boolean;
@@ -27,6 +30,29 @@ const GameCanvas: React.FC = () => {
   // Background music
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  // Calculate viewport center for coordinate transformation
+  useEffect(() => {
+    const updateViewportCenter = () => {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        setViewportCenter({
+          x: rect.width / 2,
+          y: rect.height / 2
+        });
+      }
+    };
+
+    // Initial calculation
+    updateViewportCenter();
+
+    // Update on window resize
+    window.addEventListener('resize', updateViewportCenter);
+    
+    return () => {
+      window.removeEventListener('resize', updateViewportCenter);
+    };
+  }, []);
 
   // Register Ark address when wallet is available
   useEffect(() => {
@@ -98,22 +124,30 @@ const GameCanvas: React.FC = () => {
     }
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const viewportX = event.clientX - rect.left;
+    const viewportY = event.clientY - rect.top;
+    
+    // Transform viewport coordinates to server coordinates
+    const serverX = viewportX - viewportCenter.x;
+    const serverY = viewportY - viewportCenter.y;
 
-    moveTo(x, y);
-  }, [connected, moveTo, isBlobClick]);
+    moveTo(serverX, serverY);
+  }, [connected, moveTo, isBlobClick, viewportCenter]);
 
   // Fallback for when touch events don't work properly (like in browser emulation)
   const handleCanvasMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const viewportX = event.clientX - rect.left;
+    const viewportY = event.clientY - rect.top;
+    
+    // Transform viewport coordinates to server coordinates
+    const serverX = viewportX - viewportCenter.x;
+    const serverY = viewportY - viewportCenter.y;
 
-    moveTo(x, y);
-  }, [connected, moveTo]);
+    moveTo(serverX, serverY);
+  }, [connected, moveTo, viewportCenter]);
 
   const handleCanvasTouch = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
     if (!canvasRef.current || !connected) return;
@@ -132,11 +166,15 @@ const GameCanvas: React.FC = () => {
       return; // Silently return instead of logging warning
     }
     
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const viewportX = touch.clientX - rect.left;
+    const viewportY = touch.clientY - rect.top;
+    
+    // Transform viewport coordinates to server coordinates
+    const serverX = viewportX - viewportCenter.x;
+    const serverY = viewportY - viewportCenter.y;
 
-    moveTo(x, y);
-  }, [connected, moveTo]);
+    moveTo(serverX, serverY);
+  }, [connected, moveTo, viewportCenter]);
 
   const handleBlobClick = useCallback(async (player: Player) => {
     // Set flag to prevent canvas movement
@@ -279,6 +317,7 @@ const GameCanvas: React.FC = () => {
           player={player}
           isCurrentPlayer={player.id === gameState.currentPlayer?.id}
           onBlobClick={handleBlobClick}
+          viewportCenter={viewportCenter}
         />
       ))}
 

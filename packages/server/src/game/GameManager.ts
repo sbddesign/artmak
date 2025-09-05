@@ -26,11 +26,11 @@ export class GameManager {
   }
 
   private getStartingPosition(): { x: number; y: number } {
-    // All players start in the center of the screen
-    // Assuming a typical screen size of 1920x1080
+    // All players start at origin (0, 0)
+    // Client will transform this to their viewport center
     return {
-      x: 960, // Center X
-      y: 540  // Center Y
+      x: 0, // Origin X
+      y: 0  // Origin Y
     };
   }
 
