@@ -108,19 +108,7 @@ export const useSocket = () => {
     if (socket && connected && currentPlayerIdRef.current) {
       const moveEvent: MoveEvent = { x, y };
       socket.emit('move', moveEvent);
-      
-      // Update local state immediately for current player
-      setGameState(prev => ({
-        ...prev,
-        players: prev.players.map(p => 
-          p.id === currentPlayerIdRef.current 
-            ? { ...p, targetX: x, targetY: y, isMoving: true }
-            : p
-        ),
-        currentPlayer: prev.currentPlayer?.id === currentPlayerIdRef.current 
-          ? { ...prev.currentPlayer, targetX: x, targetY: y, isMoving: true }
-          : prev.currentPlayer
-      }));
+      // Let the server response handle the state update to avoid conflicts
     }
   };
 

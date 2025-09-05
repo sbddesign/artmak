@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Player } from '../types/game';
 
 interface BlobProps {
@@ -10,9 +10,9 @@ interface BlobProps {
 
 const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClick, viewportCenter }) => {
   const blobRef = useRef<HTMLDivElement>(null);
-  const [currentX, setCurrentX] = useState(player.x);
-  const [currentY, setCurrentY] = useState(player.y);
   const animationRef = useRef<number>();
+  const currentPosRef = useRef({ x: player.x, y: player.y });
+  const isAnimatingRef = useRef(false);
 
   // Calculate dynamic size based on balance
   const calculateSize = useCallback(() => {
@@ -38,26 +38,32 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
     // Initialize position when player first appears
     if (blobRef.current && !animationRef.current) {
       // Transform server coordinates to viewport coordinates
-      setCurrentX(player.x + viewportCenter.x);
-      setCurrentY(player.y + viewportCenter.y);
+      const viewportX = player.x + viewportCenter.x;
+      const viewportY = player.y + viewportCenter.y;
+      currentPosRef.current = { x: viewportX, y: viewportY };
+      blobRef.current.style.transform = `translate(${viewportX}px, ${viewportY}px)`;
     }
   }, [player.id, viewportCenter]);
 
   useEffect(() => {
-    // Animate to target position
+    // Animate to target position using direct DOM manipulation
     const animateToTarget = () => {
+      if (!blobRef.current) return;
+      
       // Transform server target coordinates to viewport coordinates
       const targetViewportX = player.targetX + viewportCenter.x;
       const targetViewportY = player.targetY + viewportCenter.y;
       
-      const dx = targetViewportX - currentX;
-      const dy = targetViewportY - currentY;
+      const currentPos = currentPosRef.current;
+      const dx = targetViewportX - currentPos.x;
+      const dy = targetViewportY - currentPos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance < 1) {
         // Close enough to target
-        setCurrentX(targetViewportX);
-        setCurrentY(targetViewportY);
+        blobRef.current.style.transform = `translate(${targetViewportX}px, ${targetViewportY}px)`;
+        currentPosRef.current = { x: targetViewportX, y: targetViewportY };
+        isAnimatingRef.current = false;
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
           animationRef.current = undefined;
@@ -68,30 +74,32 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
       // Move towards target (dynamic movement speed based on balance)
       const moveX = (dx / distance) * movementSpeed;
       const moveY = (dy / distance) * movementSpeed;
-
-      setCurrentX(prev => prev + moveX);
-      setCurrentY(prev => prev + moveY);
+      
+      const newX = currentPos.x + moveX;
+      const newY = currentPos.y + moveY;
+      
+      // Update DOM directly using transform for better performance
+      blobRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+      currentPosRef.current = { x: newX, y: newY };
 
       animationRef.current = requestAnimationFrame(animateToTarget);
     };
 
-    if (player.isMoving) {
+    if (player.isMoving && !isAnimatingRef.current) {
+      isAnimatingRef.current = true;
       animationRef.current = requestAnimationFrame(animateToTarget);
     }
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+        animationRef.current = undefined;
       }
+      isAnimatingRef.current = false;
     };
-  }, [player.targetX, player.targetY, player.isMoving, currentX, currentY, movementSpeed, viewportCenter]);
+  }, [player.targetX, player.targetY, player.isMoving, movementSpeed, viewportCenter]);
 
-  useEffect(() => {
-    if (blobRef.current) {
-      blobRef.current.style.left = `${currentX}px`;
-      blobRef.current.style.top = `${currentY}px`;
-    }
-  }, [currentX, currentY]);
+  // Position is now updated directly in the animation loop to avoid flicker
 
   const handleBlobClick = (event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent canvas click
@@ -129,6 +137,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: isCurrentPlayer ? 10 : 5,
+        left: 0,
+        top: 0,
         transform: 'translate(-50%, -50%)'
       }}
     >
@@ -166,8 +176,9 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
           transform: 'translateX(-50%)',
           width: `${blobSize * 0.3}px`,
           height: `${blobSize * 0.15}px`,
-          border: `${blobSize * 0.033}px solid #333`,
-          borderTop: 'none',
+          borderLeft: `${blobSize * 0.033}px solid #333`,
+          borderRight: `${blobSize * 0.033}px solid #333`,
+          borderBottom: `${blobSize * 0.033}px solid #333`,
           borderRadius: `0 0 ${blobSize * 0.3}px ${blobSize * 0.3}px`
         }} />
       </div>

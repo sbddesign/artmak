@@ -64,7 +64,7 @@ export class GameManager {
       player.targetY = moveEvent.y;
       player.isMoving = true;
       this.players.set(socketId, player);
-      this.updateGameState();
+      // Don't broadcast game state on every move - let the client handle it
     }
   }
 
@@ -84,7 +84,7 @@ export class GameManager {
       }
       
       this.players.set(socketId, player);
-      this.updateGameState();
+      // Don't broadcast game state on every position update - too frequent
     }
   }
 

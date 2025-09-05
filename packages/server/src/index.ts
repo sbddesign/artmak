@@ -77,10 +77,7 @@ io.on('connection', (socket) => {
     io.emit('playerMoved', playerMoveEvent);
   });
   
-  // Handle player position updates (for smooth movement)
-  socket.on('positionUpdate', (data: { x: number; y: number }) => {
-    gameManager.updatePlayerPosition(socket.id, data.x, data.y);
-  });
+  // Position updates are now handled client-side only for smooth movement
 
   // Handle Ark address registration
   socket.on('registerArkAddress', (arkAddress: string) => {
