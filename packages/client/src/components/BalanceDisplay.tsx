@@ -25,16 +25,16 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
         bottom: '20px',
         left: '50%',
         transform: 'translateX(-50%)',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        color: 'white',
+        backgroundColor: 'transparent',
+        color: '#4A148C',
         padding: '20px 30px',
         borderRadius: '15px',
         fontSize: '24px',
         fontWeight: 'bold',
         textAlign: 'center',
         zIndex: 1000,
-        border: '2px solid #4CAF50',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        border: 'none',
+        boxShadow: 'none',
         minWidth: '300px'
       }}>
         {isCheckingBalance ? 'Checking balance...' : 'No balance data'}
@@ -43,10 +43,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
   }
 
   const formatBalance = (amount: number) => {
-    if (amount === 0) return '0';
-    if (amount < 1000) return amount.toString();
-    if (amount < 1000000) return `${(amount / 1000).toFixed(1)}K`;
-    return `${(amount / 1000000).toFixed(1)}M`;
+    return amount.toLocaleString();
   };
 
   const hasUnboardedFunds = balance.confirmed > 0 || balance.boarding > 0;
@@ -57,29 +54,29 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
       bottom: '20px',
       left: '50%',
       transform: 'translateX(-50%)',
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      color: 'white',
+      backgroundColor: 'transparent',
+      color: '#4A148C',
       padding: '25px 35px',
       borderRadius: '20px',
       fontSize: '28px',
       fontWeight: 'bold',
       textAlign: 'center',
       zIndex: 1000,
-      border: hasUnboardedFunds ? '3px solid #FF9800' : '3px solid #4CAF50',
-      boxShadow: '0 6px 25px rgba(0, 0, 0, 0.4)',
-      minWidth: '350px',
-      backdropFilter: 'blur(10px)'
+      border: hasUnboardedFunds ? '3px solid #FF9800' : 'none',
+      boxShadow: 'none',
+      minWidth: '350px'
     }}>
       <div style={{ marginBottom: '10px', fontSize: '16px', opacity: 0.8 }}>
         {isCheckingBalance ? '🔄 Updating...' : isBoarding ? '🚢 Boarding...' : '💰 Available Balance'}
       </div>
       <div style={{ 
         fontSize: '36px', 
-        color: hasUnboardedFunds ? '#FF9800' : '#4CAF50',
-        textShadow: hasUnboardedFunds ? '0 0 10px rgba(255, 152, 0, 0.5)' : '0 0 10px rgba(76, 175, 80, 0.5)',
-        marginBottom: '8px'
+        color: hasUnboardedFunds ? '#FF9800' : '#4A148C',
+        textShadow: 'none',
+        marginBottom: '8px',
+        fontFamily: 'Notable, sans-serif'
       }}>
-        {formatBalance(balance.available)} {balance.currency.toUpperCase()}
+        {formatBalance(balance.available)} ₿
       </div>
       
       {/* Show unboarded funds */}
@@ -93,7 +90,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
           borderRadius: '8px',
           border: '1px solid rgba(255, 152, 0, 0.3)'
         }}>
-          🚢 {formatBalance(balance.confirmed)} {balance.currency.toUpperCase()} ready to board
+          🚢 {formatBalance(balance.confirmed)} ₿ ready to board
         </div>
       )}
 
