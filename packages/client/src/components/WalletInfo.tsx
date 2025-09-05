@@ -4,6 +4,7 @@ import { useArkWallet } from '../hooks/useArkWallet';
 const WalletInfo: React.FC = () => {
   const { wallet, isLoaded, isCreating, error, clearWallet } = useArkWallet();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   if (!isLoaded) {
     return (
@@ -51,6 +52,16 @@ const WalletInfo: React.FC = () => {
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-8)}`;
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000); // Clear after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
   };
 
   return (
@@ -106,43 +117,64 @@ const WalletInfo: React.FC = () => {
 
           <div style={{ marginBottom: '8px' }}>
             <div style={{ color: '#FFC107', marginBottom: '2px' }}>Address:</div>
-            <div style={{ 
-              fontFamily: 'monospace', 
-              fontSize: '11px',
-              wordBreak: 'break-all',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              padding: '4px 6px',
-              borderRadius: '4px'
-            }}>
-              {formatAddress(wallet.address)}
+            <div 
+              onClick={() => copyToClipboard(wallet.address, 'address')}
+              style={{ 
+                fontFamily: 'monospace', 
+                fontSize: '11px',
+                wordBreak: 'break-all',
+                backgroundColor: copiedField === 'address' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                padding: '4px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                border: copiedField === 'address' ? '1px solid #4CAF50' : '1px solid transparent'
+              }}
+              title="Click to copy full address"
+            >
+              {copiedField === 'address' ? '✅ Copied!' : formatAddress(wallet.address)}
             </div>
           </div>
 
           <div style={{ marginBottom: '8px' }}>
             <div style={{ color: '#FFC107', marginBottom: '2px' }}>Boarding Address:</div>
-            <div style={{ 
-              fontFamily: 'monospace', 
-              fontSize: '11px',
-              wordBreak: 'break-all',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              padding: '4px 6px',
-              borderRadius: '4px'
-            }}>
-              {formatAddress(wallet.boardingAddress)}
+            <div 
+              onClick={() => copyToClipboard(wallet.boardingAddress, 'boarding')}
+              style={{ 
+                fontFamily: 'monospace', 
+                fontSize: '11px',
+                wordBreak: 'break-all',
+                backgroundColor: copiedField === 'boarding' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                padding: '4px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                border: copiedField === 'boarding' ? '1px solid #4CAF50' : '1px solid transparent'
+              }}
+              title="Click to copy full boarding address"
+            >
+              {copiedField === 'boarding' ? '✅ Copied!' : formatAddress(wallet.boardingAddress)}
             </div>
           </div>
 
           <div style={{ marginBottom: '10px' }}>
             <div style={{ color: '#FFC107', marginBottom: '2px' }}>Public Key:</div>
-            <div style={{ 
-              fontFamily: 'monospace', 
-              fontSize: '10px',
-              wordBreak: 'break-all',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              padding: '4px 6px',
-              borderRadius: '4px'
-            }}>
-              {formatAddress(wallet.publicKey)}
+            <div 
+              onClick={() => copyToClipboard(wallet.publicKey, 'publicKey')}
+              style={{ 
+                fontFamily: 'monospace', 
+                fontSize: '10px',
+                wordBreak: 'break-all',
+                backgroundColor: copiedField === 'publicKey' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                padding: '4px 6px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                border: copiedField === 'publicKey' ? '1px solid #4CAF50' : '1px solid transparent'
+              }}
+              title="Click to copy full public key"
+            >
+              {copiedField === 'publicKey' ? '✅ Copied!' : formatAddress(wallet.publicKey)}
             </div>
           </div>
 

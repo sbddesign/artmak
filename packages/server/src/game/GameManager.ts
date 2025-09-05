@@ -13,16 +13,18 @@ export class GameManager {
     '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
   ];
 
-  private getRandomColor(): string {
-    const usedColors = Array.from(this.players.values()).map(p => p.color);
-    const availableColors = this.colors.filter(color => !usedColors.includes(color));
-    
-    if (availableColors.length === 0) {
-      // If all colors are used, pick a random one
-      return this.colors[Math.floor(Math.random() * this.colors.length)];
+  private generateColorFromString(str: string): string {
+    // Simple hash function to convert string to number
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
     }
     
-    return availableColors[Math.floor(Math.random() * availableColors.length)];
+    // Use absolute value and modulo to get a consistent index
+    const colorIndex = Math.abs(hash) % this.colors.length;
+    return this.colors[colorIndex];
   }
 
   private getStartingPosition(): { x: number; y: number } {
@@ -42,7 +44,7 @@ export class GameManager {
       y: position.y,
       targetX: position.x,
       targetY: position.y,
-      color: this.getRandomColor(),
+      color: '#CCCCCC', // Default gray color until Ark address is provided
       isMoving: false
     };
 
@@ -100,6 +102,8 @@ export class GameManager {
     const player = this.players.get(socketId);
     if (player) {
       player.arkAddress = arkAddress;
+      // Generate deterministic color from Ark address
+      player.color = this.generateColorFromString(arkAddress);
       this.players.set(socketId, player);
       this.updateGameState();
     }

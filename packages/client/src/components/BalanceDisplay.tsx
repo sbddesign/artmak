@@ -62,7 +62,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
       fontWeight: 'bold',
       textAlign: 'center',
       zIndex: 1000,
-      border: hasUnboardedFunds ? '3px solid #FF9800' : 'none',
+      border: 'none',
       boxShadow: 'none',
       minWidth: '350px'
     }}>
@@ -71,7 +71,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
       </div>
       <div style={{ 
         fontSize: '36px', 
-        color: hasUnboardedFunds ? '#FF9800' : '#4A148C',
+        color: '#1565C0',
         textShadow: 'none',
         marginBottom: '8px',
         fontFamily: 'Notable, sans-serif'
@@ -83,12 +83,12 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
       {hasUnboardedFunds && (
         <div style={{ 
           fontSize: '14px', 
-          color: '#FF9800',
+          color: '#1565C0',
           marginBottom: '12px',
           padding: '8px 12px',
-          backgroundColor: 'rgba(255, 152, 0, 0.1)',
+          backgroundColor: 'rgba(21, 101, 192, 0.1)',
           borderRadius: '8px',
-          border: '1px solid rgba(255, 152, 0, 0.3)'
+          border: '1px solid rgba(21, 101, 192, 0.3)'
         }}>
           🚢 {formatBalance(balance.confirmed)} ₿ ready to board
         </div>
@@ -100,7 +100,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
           onClick={onBoardFunds}
           disabled={isBoarding}
           style={{
-            backgroundColor: isBoarding ? '#666' : '#FF9800',
+            backgroundColor: isBoarding ? '#666' : '#1565C0',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -114,13 +114,13 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, isCheck
           }}
           onMouseOver={(e) => {
             if (!isBoarding) {
-              e.currentTarget.style.backgroundColor = '#F57C00';
+              e.currentTarget.style.backgroundColor = '#0D47A1';
               e.currentTarget.style.transform = 'translateY(-2px)';
             }
           }}
           onMouseOut={(e) => {
             if (!isBoarding) {
-              e.currentTarget.style.backgroundColor = '#FF9800';
+              e.currentTarget.style.backgroundColor = '#1565C0';
               e.currentTarget.style.transform = 'translateY(0)';
             }
           }}

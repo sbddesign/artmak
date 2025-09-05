@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Player } from '../types/game';
+import { generateColorFromString, getDefaultPlayerColor } from '../utils/colorUtils';
 
 interface BlobProps {
   player: Player;
@@ -33,6 +34,14 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
 
   const blobSize = calculateSize();
   const movementSpeed = calculateSpeed();
+
+  // Get the appropriate color for this player
+  const getPlayerColor = useCallback(() => {
+    if (player.arkAddress) {
+      return generateColorFromString(player.arkAddress);
+    }
+    return player.color || getDefaultPlayerColor();
+  }, [player.arkAddress, player.color]);
 
   useEffect(() => {
     // Initialize position when player first appears
@@ -128,7 +137,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         width: `${blobSize}px`,
         height: `${blobSize}px`,
         borderRadius: '50%',
-        backgroundColor: player.color,
+        backgroundColor: getPlayerColor(),
         border: isCurrentPlayer ? '3px solid #fff' : '2px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
         transition: 'width 0.3s ease, height 0.3s ease',
