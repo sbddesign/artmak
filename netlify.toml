@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  VITE_SERVER_URL = "https://artmak-production.up.railway.app"
+  VITE_SERVER_URL = "https://artmak-game-server.onrender.com"
 
 [[redirects]]
   from = "/*"
