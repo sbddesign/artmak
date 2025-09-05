@@ -97,46 +97,19 @@ const GameCanvas: React.FC = () => {
     }
   }, [connected]);
 
-  // Initialize and play background music
+  // Initialize background music (muted by default)
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio('/artmak-song.mp3');
       audioRef.current.loop = true;
       audioRef.current.volume = 0.3; // Set volume to 30% so it's not too loud
+      // Music starts muted - user must click the music button to play
       
-      // Play music when user first interacts with the page
-      const playMusic = async () => {
-        try {
-          await audioRef.current?.play();
-          setIsMusicPlaying(true);
-        } catch (error) {
-          // Music will play when user interacts with the page
-        }
-      };
-
-      // Try to play immediately
-      playMusic();
-
-      // Also try to play on first user interaction
-      const handleFirstInteraction = () => {
-        playMusic();
-        document.removeEventListener('click', handleFirstInteraction);
-        document.removeEventListener('keydown', handleFirstInteraction);
-        document.removeEventListener('touchstart', handleFirstInteraction);
-      };
-
-      document.addEventListener('click', handleFirstInteraction);
-      document.addEventListener('keydown', handleFirstInteraction);
-      document.addEventListener('touchstart', handleFirstInteraction);
-
       return () => {
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current = null;
         }
-        document.removeEventListener('click', handleFirstInteraction);
-        document.removeEventListener('keydown', handleFirstInteraction);
-        document.removeEventListener('touchstart', handleFirstInteraction);
       };
     }
   }, []);
