@@ -50,7 +50,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
       const viewportX = player.x + viewportCenter.x;
       const viewportY = player.y + viewportCenter.y;
       currentPosRef.current = { x: viewportX, y: viewportY };
-      blobRef.current.style.transform = `translate(${viewportX}px, ${viewportY}px)`;
+      blobRef.current.style.transform = `translate(calc(${viewportX}px - 50%), calc(${viewportY}px - 50%))`;
+      blobRef.current.style.webkitTransform = `translate(calc(${viewportX}px - 50%), calc(${viewportY}px - 50%))`;
     }
   }, [player.id, viewportCenter]);
 
@@ -70,7 +71,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
 
       if (distance < 1) {
         // Close enough to target
-        blobRef.current.style.transform = `translate(${targetViewportX}px, ${targetViewportY}px)`;
+        blobRef.current.style.transform = `translate(calc(${targetViewportX}px - 50%), calc(${targetViewportY}px - 50%))`;
+        blobRef.current.style.webkitTransform = `translate(calc(${targetViewportX}px - 50%), calc(${targetViewportY}px - 50%))`;
         currentPosRef.current = { x: targetViewportX, y: targetViewportY };
         isAnimatingRef.current = false;
         if (animationRef.current) {
@@ -88,7 +90,8 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
       const newY = currentPos.y + moveY;
       
       // Update DOM directly using transform for better performance
-      blobRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+      blobRef.current.style.transform = `translate(calc(${newX}px - 50%), calc(${newY}px - 50%))`;
+      blobRef.current.style.webkitTransform = `translate(calc(${newX}px - 50%), calc(${newY}px - 50%))`;
       currentPosRef.current = { x: newX, y: newY };
 
       animationRef.current = requestAnimationFrame(animateToTarget);
@@ -148,7 +151,15 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         zIndex: isCurrentPlayer ? 10 : 5,
         left: 0,
         top: 0,
-        transform: 'translate(-50%, -50%)'
+        // Transform will be applied dynamically in animation code
+        WebkitTransform: 'translate(-50%, -50%)', // Mobile Safari compatibility
+        transform: 'translate(-50%, -50%)',
+        // Mobile Safari optimizations
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+        WebkitPerspective: '1000px',
+        perspective: '1000px',
+        willChange: 'transform'
       }}
     >
       {/* Smiley face */}
