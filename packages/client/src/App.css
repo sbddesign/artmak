@@ -42,26 +42,3 @@ body {
   }
 }
 
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .blob {
-    width: 50px !important;
-    height: 50px !important;
-  }
-  
-  .blob > div {
-    width: 25px !important;
-    height: 25px !important;
-  }
-  
-  .blob > div > div:first-child,
-  .blob > div > div:nth-child(2) {
-    width: 3px !important;
-    height: 3px !important;
-  }
-  
-  .blob > div > div:last-child {
-    width: 15px !important;
-    height: 7px !important;
-  }
-}

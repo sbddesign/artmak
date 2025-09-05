@@ -166,7 +166,12 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
       <div style={{
         width: `${blobSize * 0.5}px`, // Scale smiley face proportionally
         height: `${blobSize * 0.5}px`,
-        position: 'relative'
+        position: 'relative',
+        // Mobile Safari fixes
+        WebkitTransform: 'none',
+        transform: 'none',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden'
       }}>
         {/* Eyes */}
         <div style={{
@@ -176,7 +181,12 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
           width: `${blobSize * 0.067}px`,
           height: `${blobSize * 0.067}px`,
           backgroundColor: '#333',
-          borderRadius: '50%'
+          borderRadius: '50%',
+          // Mobile Safari fixes
+          WebkitTransform: 'none',
+          transform: 'none',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
         }} />
         <div style={{
           position: 'absolute',
@@ -185,21 +195,30 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
           width: `${blobSize * 0.067}px`,
           height: `${blobSize * 0.067}px`,
           backgroundColor: '#333',
-          borderRadius: '50%'
+          borderRadius: '50%',
+          // Mobile Safari fixes
+          WebkitTransform: 'none',
+          transform: 'none',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
         }} />
         
         {/* Smile */}
         <div style={{
           position: 'absolute',
           bottom: `${blobSize * 0.1}px`,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          left: `${blobSize * 0.1}px`, // Use left positioning instead of transform
           width: `${blobSize * 0.3}px`,
           height: `${blobSize * 0.15}px`,
           borderLeft: `${blobSize * 0.033}px solid #333`,
           borderRight: `${blobSize * 0.033}px solid #333`,
           borderBottom: `${blobSize * 0.033}px solid #333`,
-          borderRadius: `0 0 ${blobSize * 0.3}px ${blobSize * 0.3}px`
+          borderRadius: `0 0 ${blobSize * 0.3}px ${blobSize * 0.3}px`,
+          // Mobile Safari fixes
+          WebkitTransform: 'none',
+          transform: 'none',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
         }} />
       </div>
       
