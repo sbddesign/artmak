@@ -24,6 +24,15 @@ const GameCanvas: React.FC = () => {
     message: ''
   });
 
+  // Instructions toast state
+  const [instructionsToast, setInstructionsToast] = useState<{
+    isVisible: boolean;
+    message: string;
+  }>({
+    isVisible: false,
+    message: ''
+  });
+
   // Flag to prevent canvas movement when blob is clicked
   const [isBlobClick, setIsBlobClick] = useState(false);
 
@@ -67,6 +76,26 @@ const GameCanvas: React.FC = () => {
       reportBalance(balance.available);
     }
   }, [balance?.available, connected, reportBalance]);
+
+  // Show instructions toast on page load when connected
+  useEffect(() => {
+    if (connected) {
+      setInstructionsToast({
+        isVisible: true,
+        message: 'Click or tap anywhere to move your blob!'
+      });
+
+      // Auto-hide after 4 seconds
+      const timer = setTimeout(() => {
+        setInstructionsToast({
+          isVisible: false,
+          message: ''
+        });
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [connected]);
 
   // Initialize and play background music
   useEffect(() => {
@@ -214,6 +243,13 @@ const GameCanvas: React.FC = () => {
     });
   }, []);
 
+  const handleCloseInstructionsToast = useCallback(() => {
+    setInstructionsToast({
+      isVisible: false,
+      message: ''
+    });
+  }, []);
+
   const toggleMusic = useCallback(() => {
     if (audioRef.current) {
       if (isMusicPlaying) {
@@ -291,24 +327,7 @@ const GameCanvas: React.FC = () => {
         onBoardFunds={boardFunds}
       />
 
-      {/* Instructions */}
-      <div style={{
-        position: 'absolute',
-        bottom: '120px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        padding: '10px 20px',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        color: 'white',
-        borderRadius: '20px',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        zIndex: 100,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-        textAlign: 'center'
-      }}>
-        {connected ? 'Click or tap anywhere to move your blob!' : 'Connecting to server...'}
-      </div>
+      {/* Instructions toast will be rendered below */}
 
       {/* Render all players */}
       {gameState.players.map((player) => (
@@ -352,6 +371,14 @@ const GameCanvas: React.FC = () => {
         isVisible={toast.isVisible}
         onClose={handleCloseToast}
         duration={3000}
+      />
+
+      {/* Instructions Toast */}
+      <Toast
+        message={instructionsToast.message}
+        isVisible={instructionsToast.isVisible}
+        onClose={handleCloseInstructionsToast}
+        duration={4000}
       />
     </div>
   );
