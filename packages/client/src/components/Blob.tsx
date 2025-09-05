@@ -183,27 +183,7 @@ const Blob: React.FC<BlobProps> = ({ player, isCurrentPlayer = false, onBlobClic
         }} />
       </div>
       
-      {/* Balance and speed indicator */}
-      {player.availableBalance !== undefined && player.availableBalance > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '-25px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '10px',
-          color: '#fff',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          padding: '2px 6px',
-          borderRadius: '10px',
-          whiteSpace: 'nowrap',
-          zIndex: 20
-        }}>
-          {player.availableBalance.toLocaleString()} sats
-          <div style={{ fontSize: '8px', opacity: 0.8 }}>
-            Speed: {((movementSpeed / 4) * 100).toFixed(0)}%
-          </div>
-        </div>
-      )}
+      {/* Balance and speed indicators removed for cleaner look */}
     </div>
   );
 };
